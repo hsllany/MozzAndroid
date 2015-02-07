@@ -92,6 +92,10 @@ public class HttpUtils {
 
 		@Override
 		public HttpResponse call() throws Exception {
+			HttpResponse response = new HttpResponse();
+			response.html = null;
+			response.status = 101;
+
 			URL url;
 			try {
 				url = new URL(mURL);
@@ -111,7 +115,7 @@ public class HttpUtils {
 				e.printStackTrace();
 			}
 
-			return null;
+			return response;
 		}
 
 		private String mURL;
