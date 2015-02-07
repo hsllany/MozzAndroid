@@ -32,14 +32,14 @@ public class HttpUtils {
 	/**
 	 * stores the future
 	 */
-	protected final static Hashtable<String, Future<String>> futureList = new Hashtable<String, Future<String>>();
+	protected final static Hashtable<String, Future<HttpResponse>> futureList = new Hashtable<String, Future<HttpResponse>>();
 
 	public HttpUtils() {
 		new Thread() {
 			public void run() {
 				while (isRun) {
 					for (String key : futureList.keySet()) {
-						Future<String> future = futureList.get(key);
+						Future<HttpResponse> future = futureList.get(key);
 						if (future.isDone()) {
 							futureList.remove(key);
 							try {
@@ -84,14 +84,14 @@ public class HttpUtils {
 
 	protected boolean isRun = true;
 
-	class HttpTask implements Callable<String> {
+	class HttpTask implements Callable<HttpResponse> {
 
 		public HttpTask(String address) {
 			this.mURL = address;
 		}
 
 		@Override
-		public String call() throws Exception {
+		public HttpResponse call() throws Exception {
 			URL url;
 			try {
 				url = new URL(mURL);
