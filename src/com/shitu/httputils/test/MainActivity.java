@@ -1,20 +1,19 @@
 package com.shitu.httputils.test;
 
-import com.shitu.httputils.R;
-import com.shitu.httputils.R.id;
-import com.shitu.httputils.R.layout;
-import com.shitu.httputils.R.menu;
-
-import android.support.v7.app.ActionBarActivity;
-import android.support.v7.app.ActionBar;
-import android.support.v4.app.Fragment;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.os.Build;
+
+import com.shitu.httputils.R;
+import com.shitu.httputils.libs.HttpListener;
+import com.shitu.httputils.libs.HttpResponse;
+import com.shitu.httputils.libs.HttpUtils;
 
 public class MainActivity extends ActionBarActivity {
 
@@ -27,6 +26,30 @@ public class MainActivity extends ActionBarActivity {
 			getSupportFragmentManager().beginTransaction()
 					.add(R.id.container, new PlaceholderFragment()).commit();
 		}
+
+		HttpUtils httpUtils = new HttpUtils();
+		httpUtils.get("http://www.baidu.com", new HttpListener() {
+
+			@Override
+			public void onGet(HttpResponse response) {
+				Log.d("HttpUtils", "from baidu" + response.html);
+			}
+		});
+
+		httpUtils.get("http://www.sina.com.cn", new HttpListener() {
+
+			@Override
+			public void onGet(HttpResponse response) {
+				Log.d("HttpUtils", "from sina" + response.html);
+			}
+		});
+		httpUtils.get("http://www.163.com", new HttpListener() {
+
+			@Override
+			public void onGet(HttpResponse response) {
+				Log.d("HttpUtils", "from 163" + response.html);
+			}
+		});
 	}
 
 	@Override

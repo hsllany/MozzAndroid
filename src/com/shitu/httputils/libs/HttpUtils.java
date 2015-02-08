@@ -1,10 +1,17 @@
 package com.shitu.httputils.libs;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -38,25 +45,34 @@ public class HttpUtils {
 		new Thread() {
 			public void run() {
 				while (isRun) {
-					for (String key : futureList.keySet()) {
-						Future<HttpResponse> future = futureList.get(key);
-						if (future.isDone()) {
-							futureList.remove(key);
-							try {
-								listenerPool.get(key).onGet(future.get());
-							} catch (InterruptedException e) {
-								e.printStackTrace();
-							} catch (ExecutionException e) {
-								e.printStackTrace();
+					synchronized (futureList) {
+
+						Iterator iterator = futureList.entrySet().iterator();
+						while (iterator.hasNext()) {
+							Map.Entry<String, Future<HttpResponse>> entry = (Map.Entry<String, Future<HttpResponse>>) iterator
+									.next();
+							Future<HttpResponse> future = entry.getValue();
+							String key = (String) entry.getKey();
+
+							if (future.isDone()) {
+								try {
+									listenerPool.get(key).onGet(future.get());
+								} catch (InterruptedException
+										| ExecutionException e) {
+									e.printStackTrace();
+								}
+
+								iterator.remove();
 							}
 						}
 					}
 
-					try {
-						Thread.sleep(500);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
+				}
+
+				try {
+					Thread.sleep(500);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
 				}
 			};
 		}.start();
@@ -95,7 +111,7 @@ public class HttpUtils {
 			HttpResponse response = new HttpResponse();
 			response.html = null;
 			response.status = 101;
-
+			StringBuilder sb = new StringBuilder();
 			URL url;
 			try {
 				url = new URL(mURL);
@@ -103,12 +119,20 @@ public class HttpUtils {
 						.openConnection();
 
 				urlConnection.connect();
-				try {
-					Thread.sleep(200);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
+				InputStream in = urlConnection.getInputStream();
+				BufferedReader br = new BufferedReader(
+						new InputStreamReader(in));
+
+				String line = "";
+				while ((line = br.readLine()) != null) {
+					sb.append(line);
 				}
+				br.close();
+				in.close();
 				urlConnection.disconnect();
+
+				response.html = sb.toString();
+				response.status = 200;
 			} catch (MalformedURLException e) {
 				e.printStackTrace();
 			} catch (IOException e) {
