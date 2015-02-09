@@ -12,10 +12,12 @@ import android.widget.Button;
 import android.widget.Toast;
 
 import com.shitu.httputils.R;
+import com.ydandroidutils.file.SDCard;
 import com.ydandroidutils.file.YDAndroidConfig;
+import com.ydandroidutils.http.DownloaderHttpUtils;
+import com.ydandroidutils.http.HttpDownloadListener;
 import com.ydandroidutils.http.HttpListener;
 import com.ydandroidutils.http.HttpResponse;
-import com.ydandroidutils.http.HttpUtils;
 
 public class MainActivity extends Activity implements OnClickListener {
 
@@ -24,13 +26,13 @@ public class MainActivity extends Activity implements OnClickListener {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
-		Toast.makeText(this, YDAndroidConfig.getAppFileDir(this),
-				Toast.LENGTH_LONG).show();
+		Toast.makeText(this, YDAndroidConfig.getAppDir(this), Toast.LENGTH_LONG)
+				.show();
 
 		Button button = (Button) findViewById(R.id.test);
 		button.setOnClickListener(this);
 
-		HttpUtils httpUtils = new HttpUtils();
+		DownloaderHttpUtils httpUtils = new DownloaderHttpUtils();
 		httpUtils.get("http://www.baidu.com", new HttpListener() {
 
 			@Override
@@ -58,6 +60,29 @@ public class MainActivity extends Activity implements OnClickListener {
 				Log.d("HttpUtils", "from 163" + response.html);
 			}
 		}, sendData);
+
+		httpUtils.download("http://192.168.1.117/a.png",
+				new HttpDownloadListener() {
+
+					@Override
+					public void onStart(int fileSize) {
+						Log.d("downloadHttp", "fileSize=" + fileSize);
+
+					}
+
+					@Override
+					public void onFinish(int status) {
+						Log.d("downloadHttp", "status=" + status);
+
+					}
+
+					@Override
+					public void onDownloading(int downloadSize) {
+						Log.d("downloadHttp", "downloadSize=" + downloadSize);
+
+					}
+				}, SDCard.sdCardDir() + "a.png");
+
 	}
 
 	@Override

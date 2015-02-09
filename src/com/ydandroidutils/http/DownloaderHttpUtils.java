@@ -21,6 +21,11 @@ public class DownloaderHttpUtils extends HttpUtils {
 			buffer = new byte[8 * 1024];
 
 			mFile = new File(mPath);
+			try {
+				mFile.createNewFile();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 
 		@Override
