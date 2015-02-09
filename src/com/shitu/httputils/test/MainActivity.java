@@ -9,8 +9,10 @@ import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
+import android.widget.Toast;
 
 import com.shitu.httputils.R;
+import com.ydandroidutils.file.YDAndroidConfig;
 import com.ydandroidutils.http.HttpListener;
 import com.ydandroidutils.http.HttpResponse;
 import com.ydandroidutils.http.HttpUtils;
@@ -21,6 +23,9 @@ public class MainActivity extends Activity implements OnClickListener {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
+
+		Toast.makeText(this, YDAndroidConfig.getAppFileDir(this),
+				Toast.LENGTH_LONG).show();
 
 		Button button = (Button) findViewById(R.id.test);
 		button.setOnClickListener(this);

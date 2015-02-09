@@ -27,6 +27,10 @@
         </activity>
         <activity android:name="com.shitu.httputils.test.TestActivity" >
         </activity>
+
+        <meta-data
+            android:name="YD_APP_DIR"
+            android:value="Yd" />
     </application>
 
 </manifest>
