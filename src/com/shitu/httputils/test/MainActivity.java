@@ -1,5 +1,7 @@
 package com.shitu.httputils.test;
 
+import java.util.HashMap;
+
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBarActivity;
@@ -43,13 +45,18 @@ public class MainActivity extends ActionBarActivity {
 				Log.d("HttpUtils", "from sina" + response.html);
 			}
 		});
-		httpUtils.get("http://www.163.com", new HttpListener() {
+
+		HashMap<String, String> sendData = new HashMap<String, String>();
+
+		sendData.put("h", "haha");
+		sendData.put("y", "BB");
+		httpUtils.post("http://192.168.1.117/postTest.php", new HttpListener() {
 
 			@Override
 			public void onGet(HttpResponse response) {
 				Log.d("HttpUtils", "from 163" + response.html);
 			}
-		});
+		}, sendData);
 	}
 
 	@Override
