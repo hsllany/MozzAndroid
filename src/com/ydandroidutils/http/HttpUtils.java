@@ -1,4 +1,4 @@
-package com.shitu.httputils.libs;
+package com.ydandroidutils.http;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -14,6 +14,8 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import android.util.Log;
+
 /**
  * Http tools for Android application
  * 
@@ -24,11 +26,16 @@ public class HttpUtils {
 	/**
 	 * The executor for run http request
 	 */
-	protected final static ExecutorService httpExecutor = Executors
-			.newCachedThreadPool();
+	protected static ExecutorService httpExecutor;
+
+	static {
+		Log.d("HAHAHTTP", ">>>>>>>>>>>>>>>>>>");
+	}
 
 	public HttpUtils() {
-
+		if (httpExecutor == null) {
+			httpExecutor = Executors.newFixedThreadPool(5);
+		}
 	}
 
 	/**
@@ -41,6 +48,22 @@ public class HttpUtils {
 	 */
 	public void get(String url, HttpListener l) {
 		httpExecutor.execute(new HttpGet(url, l));
+	}
+
+	/**
+	 * If you met any situation that should use full compacity of CPU, you
+	 * should release the HttpUtils
+	 */
+	public static void release() {
+		httpExecutor.shutdown();
+		httpExecutor = null;
+	}
+
+	/**
+	 * @see release()
+	 */
+	public void releaseExecutor() {
+		release();
 	}
 
 	/**

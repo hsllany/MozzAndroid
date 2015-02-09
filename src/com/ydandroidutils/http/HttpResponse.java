@@ -1,4 +1,4 @@
-package com.shitu.httputils.libs;
+package com.ydandroidutils.http;
 
 public class HttpResponse {
 	public String html;
