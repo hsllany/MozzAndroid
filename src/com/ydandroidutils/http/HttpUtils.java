@@ -14,8 +14,6 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import android.util.Log;
-
 /**
  * Http tools for Android application
  * 
@@ -27,10 +25,6 @@ public class HttpUtils {
 	 * The executor for run http request
 	 */
 	protected static ExecutorService httpExecutor;
-
-	static {
-		Log.d("HAHAHTTP", ">>>>>>>>>>>>>>>>>>");
-	}
 
 	public HttpUtils() {
 		if (httpExecutor == null) {
@@ -113,7 +107,7 @@ public class HttpUtils {
 		public void run() {
 			HttpResponse response = new HttpResponse();
 			response.html = null;
-			response.status = 101;
+			response.status = -1;
 			StringBuilder sb = new StringBuilder();
 
 			URL url;
@@ -143,18 +137,18 @@ public class HttpUtils {
 				}
 				br.close();
 				in.close();
-				urlConnection.disconnect();
 
 				response.html = sb.toString();
-				response.status = 200;
+				response.status = urlConnection.getResponseCode();
 
-				mListener.onGet(response);
+				urlConnection.disconnect();
+				mListener.onSuccess(response);
 			} catch (MalformedURLException e) {
 				e.printStackTrace();
-				System.out.println("MALFORED");
+				mListener.onFail(response);
 			} catch (IOException e) {
 				e.printStackTrace();
-				System.out.println("IO");
+				mListener.onFail(response);
 			}
 		}
 
@@ -175,7 +169,7 @@ public class HttpUtils {
 		public void run() {
 			HttpResponse response = new HttpResponse();
 			response.html = null;
-			response.status = 101;
+			response.status = -1;
 			StringBuilder sb = new StringBuilder();
 			URL url;
 			try {
@@ -194,18 +188,19 @@ public class HttpUtils {
 				}
 				br.close();
 				in.close();
-				urlConnection.disconnect();
 
 				response.html = sb.toString();
-				response.status = 200;
+				response.status = urlConnection.getResponseCode();
 
-				mListener.onGet(response);
+				urlConnection.disconnect();
+
+				mListener.onSuccess(response);
 			} catch (MalformedURLException e) {
-				System.out.println("MALFORED");
 				e.printStackTrace();
+				mListener.onFail(response);
 			} catch (IOException e) {
 				e.printStackTrace();
-				System.out.println("IO");
+				mListener.onFail(response);
 			}
 
 		}

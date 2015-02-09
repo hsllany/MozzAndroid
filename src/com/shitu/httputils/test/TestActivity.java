@@ -13,28 +13,5 @@ public class TestActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		DownloaderHttpUtils httpUtils = new DownloaderHttpUtils();
-		httpUtils.download("http://192.168.1.117/a.png",
-				new HttpDownloadListener() {
-
-					@Override
-					public void onStart(int fileSize) {
-						Log.d("downloadHttp", "fileSize=" + fileSize);
-
-					}
-
-					@Override
-					public void onFinish(int status) {
-						Log.d("downloadHttp", "status=" + status);
-
-					}
-
-					@Override
-					public void onDownloading(int downloadSize) {
-						Log.d("downloadHttp", "downloadSize=" + downloadSize);
-
-					}
-				}, SDCard.sdCardDir() + "a.png");
-		
 	}
 }

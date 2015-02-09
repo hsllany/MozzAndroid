@@ -5,5 +5,7 @@ public interface HttpDownloadListener {
 
 	public void onDownloading(int downloadSize);
 
-	public void onFinish(int status);
+	public void onSuccessFinish();
+
+	public void onFail();
 }

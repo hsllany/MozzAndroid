@@ -6,8 +6,20 @@ import android.os.Environment;
 
 public class SDCard {
 	public static String sdCardDir() {
-		return Environment.getExternalStorageDirectory().getAbsolutePath()
-				.toString()
-				+ File.separator;
+		if (isSDCardMounted())
+			return Environment.getExternalStorageDirectory().getAbsolutePath()
+					.toString()
+					+ File.separator;
+
+		return null;
+	}
+
+	public static boolean isSDCardMounted() {
+		String status = Environment.getExternalStorageState();
+		if (status.equals(Environment.MEDIA_MOUNTED)) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 }

@@ -60,13 +60,14 @@ public class DownloaderHttpUtils extends HttpUtils {
 
 				}
 
-				mListener.onFinish(200);
+				mListener.onSuccessFinish();
 			} catch (MalformedURLException e) {
 				e.printStackTrace();
-				System.out.println("MALFORED");
+				mListener.onFail();
 			} catch (IOException e) {
 				mFile.delete();
 				e.printStackTrace();
+				mListener.onFail();
 			} finally {
 				if (in != null) {
 					try {
