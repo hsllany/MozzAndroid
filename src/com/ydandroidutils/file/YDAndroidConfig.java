@@ -31,7 +31,7 @@ public class YDAndroidConfig {
 	 * 
 	 * <Application android:name=""...
 	 * 
-	 * <meta-data android:name="YD_DB_DIR" android:value="Some dir you set" />
+	 * <meta-data android:name="YD_DB_NAME" android:value="Some dir you set" />
 	 * 
 	 * </Application>
 	 * 
@@ -42,7 +42,7 @@ public class YDAndroidConfig {
 	 * @return AppDir, String
 	 */
 	public static String getDBDir(Context context) {
-		return (String) getMetaData(context, "YD_DB_DIR");
+		return (String) getMetaData(context, "YD_DB_NAME");
 	}
 
 	private static Object getMetaData(Context context, String key) {

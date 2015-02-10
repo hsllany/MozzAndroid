@@ -33,6 +33,9 @@
         <meta-data
             android:name="YD_APP_DIR"
             android:value="Yd" />
+        <meta-data
+            android:name="YD_DB_NAME"
+            android:value="YD" />
     </application>
 
 </manifest>

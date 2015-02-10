@@ -1,20 +1,14 @@
 package com.shitu.httputils.test;
 
-import java.net.HttpURLConnection;
-
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.widget.Button;
-import android.widget.Toast;
 
 import com.shitu.httputils.R;
-import com.ydandroidutils.file.YDAndroidConfig;
-import com.ydandroidutils.http.HttpListener;
-import com.ydandroidutils.http.HttpResponse;
-import com.ydandroidutils.http.HttpUtils;
+import com.ydandroidutils.sqlite.Model;
+import com.ydandroidutils.sqlite.YDDBHelper;
 
 public class MainActivity extends Activity implements OnClickListener {
 
@@ -23,37 +17,25 @@ public class MainActivity extends Activity implements OnClickListener {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
-		Toast.makeText(this, YDAndroidConfig.getAppDir(this), Toast.LENGTH_LONG)
-				.show();
+		String createSQL = "create table if not exists test (_id integer primary key autoincrement, name text)";
+		YDDBHelper.createTable(createSQL, this);
 
-		Button button = (Button) findViewById(R.id.test);
-		button.setOnClickListener(this);
+		TestEloquent testTable = new TestEloquent(this);
+		TestModel newModel = testTable.Find(1, new TestModel());
 
-		HttpUtils http = new HttpUtils();
-
-		http.get("http://www.baidu.com", new HttpListener() {
-
-			@Override
-			public void onSuccess(HttpResponse response) {
-				if (response.status == HTTP_OK) {
-
-				}
-			}
-
-			@Override
-			public void onFail(HttpResponse response) {
-				// TODO Auto-generated method stub
-
-			}
-		});
-
+		System.out.println("adfa" + newModel.allOtherFields());
 	}
 
 	@Override
 	public void onClick(View arg0) {
 		Intent i = new Intent();
 		i.setClass(this, TestActivity.class);
-		startActivity(i);
 	}
+
+}
+
+class TestModel extends Model {
+
+	public String name;
 
 }
