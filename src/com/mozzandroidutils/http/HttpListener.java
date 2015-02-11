@@ -1,4 +1,4 @@
-package com.ydandroidutils.http;
+package com.mozzandroidutils.http;
 
 public interface HttpListener {
 	public void onSuccess(HttpResponse response);

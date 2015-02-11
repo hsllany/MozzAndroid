@@ -1,4 +1,4 @@
-package com.ydandroidutils.sqlite;
+package com.mozzandroidutils.sqlite;
 
 import java.lang.reflect.Field;
 
@@ -43,15 +43,17 @@ public abstract class Model {
 		return true;
 	}
 
-	Object fieldValue(String fieldName) {
+	public Object fieldValue(String fieldName) {
 		Class<? extends Model> thisClass = this.getClass();
 		try {
 			if (fieldName.equals("_id")) {
 				Class<?> superClass = thisClass.getSuperclass();
 				Field field = superClass.getDeclaredField("_id");
+				field.setAccessible(true);
 				return field.get(this);
 			} else {
 				Field field = thisClass.getDeclaredField(fieldName);
+				field.setAccessible(true);
 				return field.get(this);
 			}
 		} catch (NoSuchFieldException e) {

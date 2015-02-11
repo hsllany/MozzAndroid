@@ -1,4 +1,4 @@
-package com.ydandroidutils.http;
+package com.mozzandroidutils.http;
 
 public class HttpResponse {
 	public String html;

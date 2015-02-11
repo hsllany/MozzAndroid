@@ -1,4 +1,4 @@
-package com.ydandroidutils.file;
+package com.mozzandroidutils.file;
 
 import android.content.Context;
 import android.content.pm.ApplicationInfo;

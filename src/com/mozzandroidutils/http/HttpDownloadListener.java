@@ -1,4 +1,4 @@
-package com.ydandroidutils.http;
+package com.mozzandroidutils.http;
 
 public interface HttpDownloadListener {
 	public void onStart(int fileSize);

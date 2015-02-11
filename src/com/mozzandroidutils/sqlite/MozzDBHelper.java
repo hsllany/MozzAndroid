@@ -1,11 +1,11 @@
-package com.ydandroidutils.sqlite;
+package com.mozzandroidutils.sqlite;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 
-import com.ydandroidutils.file.YDAndroidConfig;
+import com.mozzandroidutils.file.YDAndroidConfig;
 
-public class YDDBHelper {
+public class MozzDBHelper {
 	private static SQLiteDatabase mDatabase;
 
 	public static SQLiteDatabase DBInstance(Context context) {

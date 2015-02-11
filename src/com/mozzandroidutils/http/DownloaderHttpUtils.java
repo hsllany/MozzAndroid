@@ -1,4 +1,4 @@
-package com.ydandroidutils.http;
+package com.mozzandroidutils.http;
 
 import java.io.File;
 import java.io.FileOutputStream;

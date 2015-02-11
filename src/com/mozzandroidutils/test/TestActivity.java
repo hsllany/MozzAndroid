@@ -1,12 +1,12 @@
-package com.shitu.httputils.test;
+package com.mozzandroidutils.test;
 
 import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
 
-import com.ydandroidutils.file.SDCard;
-import com.ydandroidutils.http.DownloaderHttpUtils;
-import com.ydandroidutils.http.HttpDownloadListener;
+import com.mozzandroidutils.file.SDCard;
+import com.mozzandroidutils.http.DownloaderHttpUtils;
+import com.mozzandroidutils.http.HttpDownloadListener;
 
 public class TestActivity extends Activity {
 	@Override

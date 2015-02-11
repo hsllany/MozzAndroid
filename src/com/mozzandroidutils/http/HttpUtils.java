@@ -1,4 +1,4 @@
-package com.ydandroidutils.http;
+package com.mozzandroidutils.http;
 
 import java.io.BufferedReader;
 import java.io.IOException;
