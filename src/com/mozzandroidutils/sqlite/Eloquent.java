@@ -12,13 +12,40 @@ public class Eloquent<T extends Model> {
 
 	private final static String ID_COLUMN = "_id";
 
+	public static enum ORDER {
+		DESC, ASC
+	};
+
 	public Cursor all() {
-		Cursor cursor = mDatabase.rawQuery("SELECT * FROM " + mTableName, null);
-		return cursor;
+		if (mTableExist) {
+			Cursor cursor = mDatabase.rawQuery("SELECT * FROM " + mTableName,
+					null);
+			return cursor;
+		} else {
+			return null;
+		}
+	}
+
+	public Cursor all(ORDER order) {
+		if (mTableExist) {
+			if (order == ORDER.DESC) {
+				Cursor cursor = mDatabase.rawQuery("SELECT * FROM "
+						+ mTableName + " order by _id desc", null);
+				return cursor;
+			} else {
+				Cursor cursor = mDatabase.rawQuery("SELECT * FROM "
+						+ mTableName + "order by _id", null);
+				return cursor;
+			}
+		} else {
+
+			return null;
+		}
 	}
 
 	public Cursor where(String[] keys, Object[] values) {
-		if (keys.length != values.length)
+
+		if (keys.length != values.length || !mTableExist)
 			return null;
 
 		StringBuilder sb = new StringBuilder();
