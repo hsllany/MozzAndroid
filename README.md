@@ -3,23 +3,20 @@ MozzAndroidUtils
 
 HttpUtils 用法
 -------------------
-		HttpUtils httpUtils = new HttpUtils();
-		httpUtils.get("http://www.baidu.com", new HttpListener() {
+	HttpUtils httpUtils = new HttpUtils();
+	httpUtils.get("http://www.baidu.com", new HttpListener() {
 
-			@Override
-			public void onSuccess(HttpResponse response) {
-				if (response.status == HTTP_OK)
-					System.out.println(response.html);
+		@Override
+		public void onSuccess(HttpResponse response) {
+		if (response.status == HTTP_OK)
+			System.out.println(response.html);
+		}
 
-			}
-
-			@Override
-			public void onFail(HttpResponse response) {
-				// TODO Auto-generated method stub
-
-			}
-		});
-'
+		@Override
+		public void onFail(HttpResponse response) {
+			// TODO Auto-generated method stub
+		}
+	});
 
 DB用法
 --------------------
