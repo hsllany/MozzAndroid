@@ -78,6 +78,7 @@ downloader.download("http://www.test.com/a.file", new HttpDownloadListener() {
 DB用法
 --------------------
 *由Mozz框架运行的表中，必须含有字段"_id",表示主键。*
+
 首先继承Model类，此类代表的是表中每行的数据，在其添加与表中字段一致的属性（_id不用添加）。
 
 ```
@@ -102,25 +103,28 @@ class StudentsEloquent extends Eloquent<Student>{
 
 ###查询所有：###
 ```
-StudentsEloquent students = new StudentsEloquent();
+StudentsEloquent studentTable = new StudentsEloquent();
 Cursor cursor = students.all();
 ```
 
 ###带Where的查找###
 ```
-Cursor cursor = students.where({'name'},{'zhangdao'});
+Cursor cursor = studentTable.where({'name'},{'zhangdao'});
 ```
 
 ###查找id,并更新###
 ```
-Student student = students.find(1, new Student());
+Student student = studentTable.find(1, new Student());
 student.name = "zhangdao";
-student.save();
+studentTable.save(student);
 ```
 
 ###插入新数据###
 ```
 Student student = new Student();
 student.name = "zhangdao";
-student.save();
+studentTable.save(student);
 ```
+
+###删除数据###
+studentTable.delete(student);

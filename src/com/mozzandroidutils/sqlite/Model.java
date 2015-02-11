@@ -3,7 +3,7 @@ package com.mozzandroidutils.sqlite;
 import java.lang.reflect.Field;
 
 public abstract class Model {
-	protected int _id = -1;
+	int _id = -1;
 
 	public int id() {
 		return this._id;

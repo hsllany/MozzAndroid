@@ -265,6 +265,20 @@ public abstract class Eloquent<T extends Model> {
 		}
 	}
 
+	public boolean delete(T t) {
+		if (t.hasSetId() && mTableExist) {
+			String deleteSQL = "delete from table " + mTableName
+					+ " where _id = " + t._id;
+
+			synchronized (mDatabase) {
+				mDatabase.execSQL(deleteSQL);
+			}
+
+			return true;
+		}
+		return false;
+	}
+
 	public void drop() {
 		if (mTableExist) {
 			String dropSQL = "drop table " + mTableName;
