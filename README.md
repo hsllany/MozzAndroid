@@ -127,4 +127,6 @@ studentTable.save(student);
 ```
 
 ###删除数据###
+```
 studentTable.delete(student);
+```
