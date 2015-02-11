@@ -3,6 +3,8 @@ MozzAndroidUtils
 作者：hsllany@163.com, everyknoxkyo@gmail.com
 HttpUtils 用法
 -------------------
+HttpUtils运用了多线程下载。
+
 ###get方法###
 ```
 HttpUtils httpUtils = new HttpUtils();
