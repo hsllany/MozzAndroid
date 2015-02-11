@@ -8,13 +8,20 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
-public class Eloquent<T extends Model> {
+public abstract class Eloquent<T extends Model> {
 
 	private final static String ID_COLUMN = "_id";
 
 	public static enum ORDER {
 		DESC, ASC
 	};
+
+	public static void create(String createSQL, Context context) {
+		SQLiteDatabase database = MozzDB.database(context);
+		synchronized (database) {
+			database.execSQL(createSQL);
+		}
+	}
 
 	public Cursor all() {
 		if (mTableExist) {
@@ -112,7 +119,7 @@ public class Eloquent<T extends Model> {
 	}
 
 	public Eloquent(Context context) {
-		mDatabase = MozzDBHelper.DBInstance(context);
+		mDatabase = MozzDB.database(context);
 
 		if (mTableName == null) {
 			String className = this.getClass().getSimpleName();
@@ -234,25 +241,39 @@ public class Eloquent<T extends Model> {
 			mColumn.clear();
 		}
 
-		synchronized (mDatabase) {
-			cursor = mDatabase.rawQuery("select * from " + mTableName
-					+ " limit 1", null);
-		}
-		if (cursor.moveToFirst()) {
-			int columnCount = cursor.getColumnCount();
+		if (mTableExist) {
 
-			for (int i = 0; i < columnCount; i++) {
-				String columnName = cursor.getColumnName(i);
-				int columnType = cursor.getType(i);
-				synchronized (mColumn) {
-					mColumn.put(columnName, columnType);
+			synchronized (mDatabase) {
+				cursor = mDatabase.rawQuery("select * from " + mTableName
+						+ " limit 1", null);
+			}
+			if (cursor.moveToFirst()) {
+				int columnCount = cursor.getColumnCount();
+
+				for (int i = 0; i < columnCount; i++) {
+					String columnName = cursor.getColumnName(i);
+					int columnType = cursor.getType(i);
+					synchronized (mColumn) {
+						mColumn.put(columnName, columnType);
+					}
 				}
 			}
-		}
 
-		if (cursor != null)
-			if (!cursor.isClosed())
-				cursor.close();
+			if (cursor != null)
+				if (!cursor.isClosed())
+					cursor.close();
+		}
+	}
+
+	public void drop() {
+		if (mTableExist) {
+			String dropSQL = "drop table " + mTableName;
+			synchronized (mDatabase) {
+				mDatabase.execSQL(dropSQL);
+			}
+
+			mTableExist = false;
+		}
 	}
 
 	protected String mTableName = null;
