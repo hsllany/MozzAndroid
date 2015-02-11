@@ -127,9 +127,13 @@ studentTable.save(student);
 ```
 
 ###删除数据###
-```studentTable.delete(student);```
+```
+studentTable.delete(student);
+```
 
 ###创建表###
-```Eloquent.create("student", new String[] { "name", "age" },
+```
+Eloquent.create("student", new String[] { "name", "age" },
 				new COLUMN_TYPE[] { COLUMN_TYPE.TYPE_TEXT,
-						COLUMN_TYPE.TYPE_INTEGER }, this);```
+						COLUMN_TYPE.TYPE_INTEGER }, this);
+```
