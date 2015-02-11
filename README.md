@@ -1,9 +1,9 @@
 MozzAndroidUtils
 ===================
 
-HttpUtils ÓÃ·¨
+HttpUtils ç”¨æ³•
 -------------------
-'HttpUtils httpUtils = new HttpUtils();
+		HttpUtils httpUtils = new HttpUtils();
 		httpUtils.get("http://www.baidu.com", new HttpListener() {
 
 			@Override
@@ -21,32 +21,32 @@ HttpUtils ÓÃ·¨
 		});
 '
 
-DBÓÃ·¨
+DBç”¨æ³•
 --------------------
-ÓÉMozz¿ò¼ÜÔËĞĞµÄ±íÖĞ£¬±ØĞëº¬ÓĞ×Ö¶Î"_id",±íÊ¾Ö÷¼ü¡£
+ç”±Mozzæ¡†æ¶è¿è¡Œçš„è¡¨ä¸­ï¼Œå¿…é¡»å«æœ‰å­—æ®µ"_id",è¡¨ç¤ºä¸»é”®ã€‚
 
-Ê×ÏÈ¼Ì³ĞModelÀà£¬´ËÀà´ú±íµÄÊÇ±íÖĞÃ¿ĞĞµÄÊı¾İ£¬ÔÚÆäÌí¼ÓÓë±íÖĞ×Ö¶ÎÒ»ÖÂµÄÊôĞÔ£¨_id²»ÓÃÌí¼Ó£©¡£
-'class Student extends Model {
-	private String name;
+é¦–å…ˆç»§æ‰¿Modelç±»ï¼Œæ­¤ç±»ä»£è¡¨çš„æ˜¯è¡¨ä¸­æ¯è¡Œçš„æ•°æ®ï¼Œåœ¨å…¶æ·»åŠ ä¸è¡¨ä¸­å­—æ®µä¸€è‡´çš„å±æ€§ï¼ˆ_idä¸ç”¨æ·»åŠ ï¼‰ã€‚
+		class Student extends Model {
+		private String name;
 
-	public void setName(String nm) {
-		this.name = nm;
-	}
-}'
-Ê×ÏÈ¼Ì³ĞEloquent, ÀàÃûµÄ¹æÔòÊÇ±íÃû + Eloquent
+		public void setName(String nm) {
+			this.name = nm;
+		}
+		}
+é¦–å…ˆç»§æ‰¿Eloquent, ç±»åçš„è§„åˆ™æ˜¯è¡¨å + Eloquent
 'class StudentsEloquent extends Eloquent<Student>{
 
 }
 '
 
-´Ëºó¾Í¿ÉÒÔµ÷ÓÃÁË¡£
+æ­¤åå°±å¯ä»¥è°ƒç”¨äº†ã€‚
 
-²éÑ¯ËùÓĞ£º
+æŸ¥è¯¢æ‰€æœ‰ï¼š
 '
 StudentsEloquent students = new StudentsEloquent();
 Cursor = students.all();
 '
-²éÕÒid,²¢¸üĞÂ
+æŸ¥æ‰¾id,å¹¶æ›´æ–°
 'Student student = students.find(1, new Student());
 student.name = "zhangdao";
 student.save();
