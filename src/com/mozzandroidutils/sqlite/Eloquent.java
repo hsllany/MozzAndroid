@@ -113,7 +113,6 @@ public class Eloquent<T extends Model> {
 
 	public Eloquent(Context context) {
 		mDatabase = MozzDBHelper.DBInstance(context);
-		mContext = context;
 
 		if (mTableName == null) {
 			String className = this.getClass().getSimpleName();
@@ -135,19 +134,21 @@ public class Eloquent<T extends Model> {
 		if (mTableExist) {
 			boolean insertMode = true;
 			if (t.hasSetId()) {
+				Cursor cursor = null;
 				synchronized (mDatabase) {
-					Cursor cursor = mDatabase.rawQuery(
-							"SELECT * FROM " + mTableName + " where "
-									+ ID_COLUMN + " = " + t.id(), null);
-
-					if (cursor.moveToFirst()) {
-						int countId = cursor.getInt(0);
-
-						if (countId > 0)
-							insertMode = false;
-					}
-					cursor.close();
+					cursor = mDatabase.rawQuery("SELECT * FROM " + mTableName
+							+ " where " + ID_COLUMN + " = " + t.id(), null);
 				}
+
+				if (cursor.moveToFirst()) {
+					int countId = cursor.getInt(0);
+
+					if (countId > 0)
+						insertMode = false;
+				}
+
+				if (cursor != null)
+					cursor.close();
 			}
 
 			if (insertMode) {
@@ -162,7 +163,7 @@ public class Eloquent<T extends Model> {
 				for (int i = 0; i < fieldLength; i++) {
 					String fieldName = fields[i];
 					Object value = t.fieldValue(fieldName);
-					if (value != null) {
+					if (value != null && mColumn.containsKey(fieldName)) {
 						sb.append(fieldName);
 						valueSb.append("'" + value.toString() + "'");
 
@@ -187,7 +188,7 @@ public class Eloquent<T extends Model> {
 				for (int i = 0; i < fieldLength; i++) {
 					String fieldName = fields[i];
 					Object value = t.fieldValue(fieldName);
-					if (value != null) {
+					if (value != null && mColumn.containsKey(fieldName)) {
 						sb.append(fieldName + " = '" + value.toString() + "'");
 
 						if (i < fieldLength - 1) {
@@ -256,7 +257,6 @@ public class Eloquent<T extends Model> {
 
 	protected String mTableName = null;
 	private SQLiteDatabase mDatabase;
-	private Context mContext;
 
 	private Map<String, Integer> mColumn = new HashMap<String, Integer>();
 	private boolean mTableExist = false;

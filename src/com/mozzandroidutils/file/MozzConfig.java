@@ -6,7 +6,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Bundle;
 
-public class YDAndroidConfig {
+public class MozzConfig {
 	/**
 	 * Read the App File Dir from manifest. if you should use this, please set
 	 * metadata inside the Application node. Example:

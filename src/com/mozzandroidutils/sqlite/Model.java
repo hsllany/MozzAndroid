@@ -78,4 +78,5 @@ public abstract class Model {
 
 		return fieldsString;
 	}
+
 }

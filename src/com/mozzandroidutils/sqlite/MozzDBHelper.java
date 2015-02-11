@@ -3,7 +3,7 @@ package com.mozzandroidutils.sqlite;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 
-import com.mozzandroidutils.file.YDAndroidConfig;
+import com.mozzandroidutils.file.MozzConfig;
 
 public class MozzDBHelper {
 	private static SQLiteDatabase mDatabase;
@@ -13,7 +13,7 @@ public class MozzDBHelper {
 	}
 
 	private static SQLiteDatabase DB(Context context) {
-		String dbName = YDAndroidConfig.getDBDir(context);
+		String dbName = MozzConfig.getDBDir(context);
 		if (dbName != null) {
 			if (mDatabase == null || !mDatabase.isOpen())
 				mDatabase = context.openOrCreateDatabase(dbName,
