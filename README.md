@@ -51,7 +51,7 @@ class StudentsEloquent extends Eloquent<Student>{
 
 ```
 StudentsEloquent students = new StudentsEloquent();
-Cursor = students.all();
+Cursor cursor = students.all();
 ```
 
 查找id,并更新
