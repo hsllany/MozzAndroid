@@ -3,7 +3,7 @@ MozzAndroidUtils
 作者：hsllany@163.com, everyknoxkyo@gmail.com
 HttpUtils 用法
 -------------------
-
+###get方法###
 ```
 HttpUtils httpUtils = new HttpUtils();
 httpUtils.get("http://www.baidu.com", new HttpListener() {
@@ -19,6 +19,58 @@ httpUtils.get("http://www.baidu.com", new HttpListener() {
 			// TODO Auto-generated method stub
 		}
 	});
+```
+
+###post 方法###
+```
+//装入Post参数
+Map<String, String> postData = new HashMap<String, String>();
+postData.put("email", "test@t.com");
+
+httpUtils.post("http://www.baidu.com", new HttpListener() {
+
+		@Override
+		public void onSuccess(HttpResponse response) {
+		if (response.status == HTTP_OK)
+			System.out.println(response.html);
+	}
+
+		@Override
+		public void onFail(HttpResponse response) {
+			// TODO Auto-generated method stub
+		}
+	}, postData);
+```
+
+###文件下载###
+```
+DownloaderHttpUtils downloader = new DownloaderHttpUtils();
+downloader.download("http://www.test.com/a.file", new HttpDownloadListener() {
+			
+	@Override
+	public void onSuccessFinish() {
+		// TODO Auto-generated method stub
+				
+	}
+			
+	@Override
+	public void onStart(int fileSize) {
+		// TODO Auto-generated method stub
+				
+	}
+			
+	@Override
+	public void onFail() {
+		// TODO Auto-generated method stub
+				
+	}
+			
+	@Override
+	public void onDownloading(int downloadSize) {
+		//可以计算已经下载的downloadSize
+				
+	}
+}, SDCard.sdCardDir() + "/saveDir");
 ```
 
 DB用法
