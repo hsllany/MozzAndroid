@@ -8,6 +8,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 
 import com.mozzandroidutils.sqlite.Eloquent;
+import com.mozzandroidutils.sqlite.Eloquent.COLUMN_TYPE;
 import com.mozzandroidutils.sqlite.Model;
 
 public class MainActivity extends Activity implements OnClickListener {
@@ -16,6 +17,10 @@ public class MainActivity extends Activity implements OnClickListener {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
+
+		Eloquent.create("student", new String[] { "name", "age" },
+				new COLUMN_TYPE[] { COLUMN_TYPE.TYPE_TEXT,
+						COLUMN_TYPE.TYPE_INTEGER }, this);
 
 	}
 

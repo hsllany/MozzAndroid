@@ -8,19 +8,97 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
+/**
+ * 代表数据库中的表
+ * 
+ * @author Yang
+ * 
+ * @param <T>, 必须是Model类继承
+ */
 public abstract class Eloquent<T extends Model> {
 
 	private final static String ID_COLUMN = "_id";
 
+	/**
+	 * 顺序
+	 * 
+	 * @author PC
+	 * 
+	 */
 	public static enum ORDER {
 		DESC, ASC
 	};
 
-	public static void create(String createSQL, Context context) {
+	/**
+	 * sqlite的类型
+	 * 
+	 * @author PC
+	 * 
+	 */
+	public static enum COLUMN_TYPE {
+		TYPE_NULL, TYPE_INTEGER, TYPE_REAL, TYPE_TEXT, TYPE_BLOB
+	}
+
+	/**
+	 * 创建表
+	 * 
+	 * @param tableName
+	 *            , 表名
+	 * @param columnNames
+	 *            , 列名
+	 * @param types
+	 *            , 列的类型
+	 * @param context
+	 * @return
+	 */
+	public static boolean create(String tableName, String[] columnNames,
+			COLUMN_TYPE[] types, Context context) {
+
+		if (columnNames.length != types.length || columnNames.length == 0
+				|| types.length == 0)
+			return false;
+
 		SQLiteDatabase database = MozzDB.database(context);
+		StringBuilder sb = new StringBuilder();
+
+		sb.append("create table " + tableName.toLowerCase());
+		sb.append(" (" + ID_COLUMN + " integer primary key autoincrement, ");
+
+		for (int i = 0; i < columnNames.length; i++) {
+			String type = typeToString(types[i]);
+
+			if (type != null) {
+				sb.append(columnNames[i] + " " + type);
+
+				if (i < columnNames.length - 1)
+					sb.append(",");
+			}
+		}
+
+		String createSQL = sb.toString() + ")";
+
 		synchronized (database) {
 			database.execSQL(createSQL);
 		}
+
+		return true;
+	}
+
+	private static String typeToString(COLUMN_TYPE type) {
+		switch (type) {
+		case TYPE_REAL:
+			return "REAL";
+		case TYPE_INTEGER:
+			return "INTEGER";
+		case TYPE_TEXT:
+			return "TEXT";
+		case TYPE_BLOB:
+			return "BLOB";
+		default:
+			break;
+		}
+
+		return null;
 	}
 
 	public Cursor all() {
@@ -36,12 +114,13 @@ public abstract class Eloquent<T extends Model> {
 	public Cursor all(ORDER order) {
 		if (mTableExist) {
 			if (order == ORDER.DESC) {
-				Cursor cursor = mDatabase.rawQuery("SELECT * FROM "
-						+ mTableName + " order by _id desc", null);
+				Cursor cursor = mDatabase
+						.rawQuery("SELECT * FROM " + mTableName + " order by "
+								+ ID_COLUMN + " desc", null);
 				return cursor;
 			} else {
 				Cursor cursor = mDatabase.rawQuery("SELECT * FROM "
-						+ mTableName + "order by _id", null);
+						+ mTableName + "order by " + ID_COLUMN, null);
 				return cursor;
 			}
 		} else {
@@ -205,7 +284,7 @@ public abstract class Eloquent<T extends Model> {
 				}
 
 				String upgrateSQL = "update " + mTableName + " set "
-						+ sb.toString() + " where _id = " + t._id;
+						+ sb.toString() + " where " + ID_COLUMN + " = " + t._id;
 				synchronized (mDatabase) {
 					mDatabase.execSQL(upgrateSQL);
 				}
@@ -267,8 +346,8 @@ public abstract class Eloquent<T extends Model> {
 
 	public boolean delete(T t) {
 		if (t.hasSetId() && mTableExist) {
-			String deleteSQL = "delete from table " + mTableName
-					+ " where _id = " + t._id;
+			String deleteSQL = "delete from table " + mTableName + " where "
+					+ ID_COLUMN + " = " + t._id;
 
 			synchronized (mDatabase) {
 				mDatabase.execSQL(deleteSQL);

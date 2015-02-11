@@ -3,7 +3,7 @@ MozzAndroidUtils
 作者：hsllany@163.com, everyknoxkyo@gmail.com
 HttpUtils 用法
 -------------------
-HttpUtils运用了多线程下载。
+HttpUtils运用了多线程，每个任务执行时是属于不同进程，所以不要在HttpListener或HttpDownloadListener中操纵UI,应运用Handler。
 
 ###get方法###
 ```
@@ -127,4 +127,9 @@ studentTable.save(student);
 ```
 
 ###删除数据###
-studentTable.delete(student);
+```studentTable.delete(student);```
+
+###创建表###
+```Eloquent.create("student", new String[] { "name", "age" },
+				new COLUMN_TYPE[] { COLUMN_TYPE.TYPE_TEXT,
+						COLUMN_TYPE.TYPE_INTEGER }, this);```
