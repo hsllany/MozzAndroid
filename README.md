@@ -46,7 +46,7 @@ class StudentsEloquent extends Eloquent<Student>{
 
 此后就可以调用了。
 
-*查询所有：*
+###查询所有：###
 ```
 StudentsEloquent students = new StudentsEloquent();
 Cursor cursor = students.all();
