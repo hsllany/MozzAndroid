@@ -52,14 +52,19 @@ StudentsEloquent students = new StudentsEloquent();
 Cursor cursor = students.all();
 ```
 
-*查找id,并更新*
+###带Where的查找###
+```
+Cursor cursor = students.where({'name'},{'zhangdao'});
+```
+
+###查找id,并更新###
 ```
 Student student = students.find(1, new Student());
 student.name = "zhangdao";
 student.save();
 ```
 
-*插入新数据*
+###插入新数据###
 ```
 Student student = new Student();
 student.name = "zhangdao";
