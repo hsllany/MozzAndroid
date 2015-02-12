@@ -8,28 +8,66 @@ import com.mozzandroidutils.file.MozzConfig;
 public class MozzDB {
 	private static SQLiteDatabase mDatabase;
 
-	public static SQLiteDatabase database(Context context) {
-		return DB(context);
+	private static int databaseInstanceNum = 0;
+
+	static SQLiteDatabase writebleDatabase(Context context) {
+		return writebleDB(context);
 	}
 
-	private static SQLiteDatabase DB(Context context) {
+	static SQLiteDatabase readOnlyDatabase(Context context) {
+		String dbName = MozzConfig.getDBDir(context);
+
+		String path = context.getDatabasePath(dbName).getPath();
+
+		SQLiteDatabase database = SQLiteDatabase.openDatabase(path, null,
+				SQLiteDatabase.OPEN_READONLY);
+
+		return database;
+	}
+
+	private static SQLiteDatabase writebleDB(Context context) {
+
 		String dbName = MozzConfig.getDBDir(context);
 		if (dbName != null) {
 
-			if (mDatabase == null || !mDatabase.isOpen())
+			if (mDatabase != null) {
+				if (!mDatabase.isOpen()) {
+					mDatabase = null;
+				}
+			}
+
+			if (mDatabase == null) {
 				mDatabase = context.openOrCreateDatabase(dbName,
 						Context.MODE_ENABLE_WRITE_AHEAD_LOGGING, null, null);
+				mDatabase.enableWriteAheadLogging();
+			}
+			databaseInstanceNum++;
 			return mDatabase;
 		}
 		return null;
 	}
 
-	public static void close() {
+	static void close() {
+		databaseInstanceNum--;
+
+		if (databaseInstanceNum == 0) {
+			closeDB();
+		}
+	}
+
+	private static void closeDB() {
 		if (mDatabase != null && mDatabase.isOpen()) {
 			mDatabase.close();
 			mDatabase = null;
 		} else if (!mDatabase.isOpen()) {
 			mDatabase = null;
 		}
+	}
+
+	static boolean isDBClosed() {
+		if (mDatabase == null)
+			return true;
+		else
+			return !mDatabase.isOpen();
 	}
 }

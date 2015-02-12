@@ -7,8 +7,8 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.View.OnClickListener;
 
+import com.mozzandroidutils.sqlite.ColumnType;
 import com.mozzandroidutils.sqlite.Eloquent;
-import com.mozzandroidutils.sqlite.Eloquent.COLUMN_TYPE;
 import com.mozzandroidutils.sqlite.Model;
 
 public class MainActivity extends Activity implements OnClickListener {
@@ -18,9 +18,51 @@ public class MainActivity extends Activity implements OnClickListener {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
-		Eloquent.create("student", new String[] { "name", "age" },
-				new COLUMN_TYPE[] { COLUMN_TYPE.TYPE_TEXT,
-						COLUMN_TYPE.TYPE_INTEGER }, this);
+		Eloquent.create("test", new String[] { "name" },
+				new ColumnType[] { ColumnType.TYPE_TEXT }, this);
+
+		final TestEloquent testTable = new TestEloquent(this);
+
+		new Thread() {
+			public void run() {
+				for (int i = 0; i < 100; i++) {
+					TestModel newModel = new TestModel();
+					newModel.setName(System.currentTimeMillis() + "_" + 1);
+					testTable.save(newModel);
+				}
+			};
+		}.start();
+
+		new Thread() {
+			public void run() {
+				for (int i = 0; i < 100; i++) {
+					TestModel newModel = new TestModel();
+					newModel.setName(System.currentTimeMillis() + "_" + 2);
+					testTable.save(newModel);
+				}
+			};
+		}.start();
+
+		new Thread() {
+			public void run() {
+				for (int i = 0; i < 100; i++) {
+					TestModel newModel = new TestModel();
+					newModel.setName(System.currentTimeMillis() + "_" + 3);
+					testTable.save(newModel);
+				}
+			};
+		}.start();
+
+		new Thread() {
+			public void run() {
+				for (int i = 0; i < 100; i++) {
+					TestModel newModel = new TestModel();
+					newModel.setName(System.currentTimeMillis() + "_" + 4);
+					testTable.save(newModel);
+				}
+
+			};
+		}.start();
 
 	}
 

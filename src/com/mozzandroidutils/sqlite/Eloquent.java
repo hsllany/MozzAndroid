@@ -1,12 +1,12 @@
 package com.mozzandroidutils.sqlite;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
 
 /**
  * 代表数据库中的表
@@ -16,6 +16,8 @@ import android.database.sqlite.SQLiteDatabase;
  * @param <T>, 必须是Model类继承
  */
 public abstract class Eloquent<T extends Model> {
+
+	private String DEBUG_TAG = this.getClass().getSimpleName();
 
 	private final static String ID_COLUMN = "_id";
 
@@ -30,16 +32,6 @@ public abstract class Eloquent<T extends Model> {
 	};
 
 	/**
-	 * sqlite的类型
-	 * 
-	 * @author PC
-	 * 
-	 */
-	public static enum COLUMN_TYPE {
-		TYPE_NULL, TYPE_INTEGER, TYPE_REAL, TYPE_TEXT, TYPE_BLOB
-	}
-
-	/**
 	 * 创建表
 	 * 
 	 * @param tableName
@@ -52,16 +44,16 @@ public abstract class Eloquent<T extends Model> {
 	 * @return
 	 */
 	public static boolean create(String tableName, String[] columnNames,
-			COLUMN_TYPE[] types, Context context) {
+			ColumnType[] types, Context context) {
 
 		if (columnNames.length != types.length || columnNames.length == 0
 				|| types.length == 0)
 			return false;
 
-		SQLiteDatabase database = MozzDB.database(context);
+		SQLiteDatabase database = MozzDB.writebleDatabase(context);
 		StringBuilder sb = new StringBuilder();
 
-		sb.append("create table " + tableName.toLowerCase());
+		sb.append("create table if not exists " + tableName.toLowerCase());
 		sb.append(" (" + ID_COLUMN + " integer primary key autoincrement, ");
 
 		for (int i = 0; i < columnNames.length; i++) {
@@ -77,6 +69,7 @@ public abstract class Eloquent<T extends Model> {
 
 		String createSQL = sb.toString() + ")";
 
+		Log.d("Eloquent", createSQL);
 		synchronized (database) {
 			database.execSQL(createSQL);
 		}
@@ -84,7 +77,7 @@ public abstract class Eloquent<T extends Model> {
 		return true;
 	}
 
-	private static String typeToString(COLUMN_TYPE type) {
+	private static String typeToString(ColumnType type) {
 		switch (type) {
 		case TYPE_REAL:
 			return "REAL";
@@ -103,6 +96,7 @@ public abstract class Eloquent<T extends Model> {
 
 	public Cursor all() {
 		if (mTableExist) {
+			debug("SELECT * FROM " + mTableName);
 			Cursor cursor = mDatabase.rawQuery("SELECT * FROM " + mTableName,
 					null);
 			return cursor;
@@ -114,11 +108,14 @@ public abstract class Eloquent<T extends Model> {
 	public Cursor all(ORDER order) {
 		if (mTableExist) {
 			if (order == ORDER.DESC) {
+				debug("SELECT * FROM " + mTableName + " order by " + ID_COLUMN
+						+ " desc");
 				Cursor cursor = mDatabase
 						.rawQuery("SELECT * FROM " + mTableName + " order by "
 								+ ID_COLUMN + " desc", null);
 				return cursor;
 			} else {
+				debug("SELECT * FROM " + mTableName + "order by " + ID_COLUMN);
 				Cursor cursor = mDatabase.rawQuery("SELECT * FROM "
 						+ mTableName + "order by " + ID_COLUMN, null);
 				return cursor;
@@ -143,15 +140,14 @@ public abstract class Eloquent<T extends Model> {
 
 		String selectSQL = "select * from " + mTableName + " where "
 				+ sb.toString();
+		debug(selectSQL);
 		return mDatabase.rawQuery(selectSQL, null);
-	}
-
-	public ArrayList<T> allAsList() {
-		return null;
 	}
 
 	public T Find(int id, T t) {
 		if (mTableExist) {
+			debug("SELECT * FROM " + mTableName + " where " + ID_COLUMN + " = "
+					+ id);
 			Cursor cursor = mDatabase.rawQuery("SELECT * FROM " + mTableName
 					+ " where " + ID_COLUMN + " = " + id, null);
 
@@ -198,7 +194,24 @@ public abstract class Eloquent<T extends Model> {
 	}
 
 	public Eloquent(Context context) {
-		mDatabase = MozzDB.database(context);
+		mDatabase = MozzDB.writebleDatabase(context);
+
+		if (mTableName == null) {
+			String className = this.getClass().getSimpleName();
+			mTableName = className.substring(0, className.indexOf("Eloquent"))
+					.toLowerCase();
+		}
+
+		checkTableExistAndColumn();
+	}
+
+	public Eloquent(Context context, boolean readOnly) {
+		if (readOnly) {
+			mDatabase = MozzDB.readOnlyDatabase(context);
+			mReadOnly = true;
+		} else {
+			mDatabase = MozzDB.writebleDatabase(context);
+		}
 
 		if (mTableName == null) {
 			String className = this.getClass().getSimpleName();
@@ -213,7 +226,12 @@ public abstract class Eloquent<T extends Model> {
 		this(context);
 
 		mTableName = tableName.toLowerCase();
+	}
 
+	public Eloquent(Context context, String tableName, boolean readOnly) {
+		this(context, readOnly);
+
+		mTableName = tableName.toLowerCase();
 	}
 
 	public boolean save(T t) {
@@ -221,6 +239,8 @@ public abstract class Eloquent<T extends Model> {
 			boolean insertMode = true;
 			if (t.hasSetId()) {
 				Cursor cursor = null;
+				debug("SELECT * FROM " + mTableName + " where " + ID_COLUMN
+						+ " = " + t.id());
 				synchronized (mDatabase) {
 					cursor = mDatabase.rawQuery("SELECT * FROM " + mTableName
 							+ " where " + ID_COLUMN + " = " + t.id(), null);
@@ -249,7 +269,7 @@ public abstract class Eloquent<T extends Model> {
 				for (int i = 0; i < fieldLength; i++) {
 					String fieldName = fields[i];
 					Object value = t.fieldValue(fieldName);
-					if (value != null && mColumn.containsKey(fieldName)) {
+					if (value != null && mColumn.contains(fieldName)) {
 						sb.append(fieldName);
 						valueSb.append("'" + value.toString() + "'");
 
@@ -261,6 +281,7 @@ public abstract class Eloquent<T extends Model> {
 				}
 
 				String sqlInsert = sb.toString() + valueSb.toString() + ")";
+				debug(sqlInsert);
 				synchronized (mDatabase) {
 					mDatabase.execSQL(sqlInsert);
 				}
@@ -274,7 +295,7 @@ public abstract class Eloquent<T extends Model> {
 				for (int i = 0; i < fieldLength; i++) {
 					String fieldName = fields[i];
 					Object value = t.fieldValue(fieldName);
-					if (value != null && mColumn.containsKey(fieldName)) {
+					if (value != null && mColumn.contains(fieldName)) {
 						sb.append(fieldName + " = '" + value.toString() + "'");
 
 						if (i < fieldLength - 1) {
@@ -285,6 +306,7 @@ public abstract class Eloquent<T extends Model> {
 
 				String upgrateSQL = "update " + mTableName + " set "
 						+ sb.toString() + " where " + ID_COLUMN + " = " + t._id;
+				debug(upgrateSQL);
 				synchronized (mDatabase) {
 					mDatabase.execSQL(upgrateSQL);
 				}
@@ -326,15 +348,12 @@ public abstract class Eloquent<T extends Model> {
 				cursor = mDatabase.rawQuery("select * from " + mTableName
 						+ " limit 1", null);
 			}
-			if (cursor.moveToFirst()) {
-				int columnCount = cursor.getColumnCount();
+			int columnCount = cursor.getColumnCount();
 
-				for (int i = 0; i < columnCount; i++) {
-					String columnName = cursor.getColumnName(i);
-					int columnType = cursor.getType(i);
-					synchronized (mColumn) {
-						mColumn.put(columnName, columnType);
-					}
+			for (int i = 0; i < columnCount; i++) {
+				String columnName = cursor.getColumnName(i);
+				synchronized (mColumn) {
+					mColumn.add(columnName);
 				}
 			}
 
@@ -369,10 +388,42 @@ public abstract class Eloquent<T extends Model> {
 		}
 	}
 
+	/**
+	 * should be positioned in the onDestory() of Activity, Service, or
+	 * Appliction
+	 */
+	public void onDestory() {
+		if (mReadOnly) {
+			if (mDatabase != null && !mDatabase.isOpen())
+				mDatabase.close();
+
+			mDatabase = null;
+		} else {
+			if (!MozzDB.isDBClosed())
+				MozzDB.close();
+		}
+	}
+
+	public void setDebug(boolean open) {
+		if (open)
+			mOpenDebug = true;
+		else
+			mOpenDebug = false;
+	}
+
+	private void debug(String debugInfo) {
+		if (mOpenDebug)
+			Log.d(DEBUG_TAG, debugInfo);
+	}
+
 	protected String mTableName = null;
 	private SQLiteDatabase mDatabase;
 
-	private Map<String, Integer> mColumn = new HashMap<String, Integer>();
+	private List<String> mColumn = new ArrayList<String>();
 	private boolean mTableExist = false;
+
+	private boolean mReadOnly = false;
+
+	private boolean mOpenDebug = true;
 
 }
