@@ -57,7 +57,7 @@ public abstract class Eloquent<T extends Model> {
 		sb.append(" (" + ID_COLUMN + " integer primary key autoincrement, ");
 
 		for (int i = 0; i < columnNames.length; i++) {
-			String type = typeToString(types[i]);
+			String type = types[i].toString();
 
 			if (type != null) {
 				sb.append(columnNames[i] + " " + type);
@@ -75,23 +75,6 @@ public abstract class Eloquent<T extends Model> {
 		}
 
 		return true;
-	}
-
-	private static String typeToString(ColumnType type) {
-		switch (type) {
-		case TYPE_REAL:
-			return "REAL";
-		case TYPE_INTEGER:
-			return "INTEGER";
-		case TYPE_TEXT:
-			return "TEXT";
-		case TYPE_BLOB:
-			return "BLOB";
-		default:
-			break;
-		}
-
-		return null;
 	}
 
 	public Cursor all() {
@@ -392,7 +375,7 @@ public abstract class Eloquent<T extends Model> {
 	 * should be positioned in the onDestory() of Activity, Service, or
 	 * Appliction
 	 */
-	public void onDestory() {
+	public void close() {
 		if (mReadOnly) {
 			if (mDatabase != null && !mDatabase.isOpen())
 				mDatabase.close();

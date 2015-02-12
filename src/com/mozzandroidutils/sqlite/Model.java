@@ -43,7 +43,7 @@ public abstract class Model {
 		return true;
 	}
 
-	public Object fieldValue(String fieldName) {
+	Object fieldValue(String fieldName) {
 		Class<? extends Model> thisClass = this.getClass();
 		try {
 			if (fieldName.equals("_id")) {

@@ -64,12 +64,18 @@ public class MainActivity extends Activity implements OnClickListener {
 			};
 		}.start();
 
+		testTable.close();
+
 	}
 
 	@Override
 	public void onClick(View arg0) {
 		Intent i = new Intent();
 		i.setClass(this, TestActivity.class);
+	}
+
+	public void onDestory() {
+
 	}
 
 }

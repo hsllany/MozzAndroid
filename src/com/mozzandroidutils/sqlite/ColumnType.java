@@ -1,5 +1,18 @@
 package com.mozzandroidutils.sqlite;
 
 public enum ColumnType {
-	TYPE_NULL, TYPE_INTEGER, TYPE_REAL, TYPE_TEXT, TYPE_BLOB
+
+	TYPE_INTEGER("integer"), TYPE_REAL("real"), TYPE_TEXT("text"), TYPE_BLOB(
+			"blob");
+
+	private String mValue;
+
+	ColumnType(String value) {
+		mValue = value;
+	}
+
+	@Override
+	public String toString() {
+		return mValue;
+	}
 }
