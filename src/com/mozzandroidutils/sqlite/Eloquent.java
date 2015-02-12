@@ -205,7 +205,7 @@ public abstract class Eloquent<T extends Model> {
 		checkTableExistAndColumn();
 	}
 
-	public Eloquent(Context context, boolean readOnly) {
+	Eloquent(Context context, boolean readOnly) {
 		if (readOnly) {
 			mDatabase = MozzDB.readOnlyDatabase(context);
 			mReadOnly = true;
@@ -228,7 +228,7 @@ public abstract class Eloquent<T extends Model> {
 		mTableName = tableName.toLowerCase();
 	}
 
-	public Eloquent(Context context, String tableName, boolean readOnly) {
+	Eloquent(Context context, String tableName, boolean readOnly) {
 		this(context, readOnly);
 
 		mTableName = tableName.toLowerCase();
