@@ -27,8 +27,9 @@ public class Upgrader {
 				if (response.status == HTTP_OK && mUpgradeListener != null) {
 					try {
 						JSONObject jsonObject = new JSONObject(response.html);
-						int serverCode = jsonObject.getInt("code");
-						String serverVersion = jsonObject.getString("version");
+						int serverCode = jsonObject.getInt("versionCode");
+						String serverVersion = jsonObject
+								.getString("versionName");
 						String serverVersionDescription = jsonObject
 								.getString("des");
 						mDownloadUrl = jsonObject.getString("downloadurl");

@@ -1,12 +1,14 @@
 MozzAndroidUtils
 ===================
 作者：hsllany@163.com, everyknoxkyo@gmail.com
-HttpUtils 用法
+HttpUtils及DownloadHttpUtils 用法
 -------------------
-HttpUtils为异步返回，每个任务执行时是属于不同线程，所以不应在HttpListener或HttpDownloadListener中操纵UI，应运用Handler。
+普通网络请求，可用HttpUtils即可。若涉及到文件下载，应用DownloadHttpUtils.
+
+HttpUtils和DownloadHttpUtils均为异步机制，每个任务执行时是属于不同线程，所以不应在HttpListener或HttpDownloadListener中操纵UI，应运用Handler。
 
 ###get 方法###
-```
+```java
 HttpUtils httpUtils = new HttpUtils();
 httpUtils.get("http://www.baidu.com", new HttpListener() {
 
@@ -24,7 +26,7 @@ httpUtils.get("http://www.baidu.com", new HttpListener() {
 ```
 
 ###post 方法###
-```
+```java
 //装入Post参数
 Map<String, String> postData = new HashMap<String, String>();
 postData.put("email", "test@t.com");
@@ -45,7 +47,7 @@ httpUtils.post("http://www.baidu.com", new HttpListener() {
 ```
 
 ###文件下载###
-```
+```java
 DownloaderHttpUtils downloader = new DownloaderHttpUtils();
 downloader.download("http://www.test.com/a.file", new HttpDownloadListener() {
 			
@@ -81,7 +83,7 @@ DB用法
 
 首先继承Model类，此类代表的是表中每行的数据，在其添加与表中字段一致的属性（_id不用添加）。
 
-```
+```java
 class Student extends Model {
 	private String name;
 
@@ -93,7 +95,7 @@ class Student extends Model {
 
 然后，继承Eloquent（代表数据库中的表）, 类名的规则是：表名 + Eloquent。注意命名应和数据库中表明对应。
 
-```
+```java
 class StudentsEloquent extends Eloquent<Student>{
 
 }
@@ -101,37 +103,37 @@ class StudentsEloquent extends Eloquent<Student>{
 之后，运用如下：
 
 ###查询所有：###
-```
+```java
 StudentsEloquent studentTable = new StudentsEloquent();
 Cursor cursor = students.all();
 ```
 
 ###带Where的查找###
-```
+```java
 Cursor cursor = studentTable.where({'name'},{'zhangdao'});
 ```
 
 ###查找id,并更新###
-```
+```java
 Student student = studentTable.find(1, new Student());
 student.name = "zhangdao";
 studentTable.save(student);
 ```
 
 ###插入新数据###
-```
+```java
 Student student = new Student();
 student.name = "zhangdao";
 studentTable.save(student);
 ```
 
 ###删除数据###
-```
+```java
 studentTable.delete(student);
 ```
 
 ###创建表###
-```
+```java
 Eloquent.create("student", new String[] { "name", "age" },
 				new COLUMN_TYPE[] { COLUMN_TYPE.TYPE_TEXT,
 						COLUMN_TYPE.TYPE_INTEGER }, this);
@@ -141,10 +143,18 @@ Eloquent.create("student", new String[] { "name", "age" },
 --------------------
 使用Upgrader，可灵活对客户端进行升级。
 
-示例：
+服务器应对应配置升级用json,示例如下：
+```json
+{"versionCode":3, "versionName":"1.1.1", "des":"2015年的新版本", "downloadurl":"http://test.com/test.apk"}
 ```
-final Upgrader upgrader = new Upgrader(
+这里code为版本对应编号，应大于AndroidManifest。xml中的versionCode，否则不会触发onCheckNewVersion中hasNew为true的情况。具体见下：
+示例：
+```java
+		//定义upgrader,传入升级网址
+		final Upgrader upgrader = new Upgrader(
 				"http://182.92.150.3/upgrade.json", this);
+				
+		//定义回调接口，处理升级
 		upgrader.setOnUpgradeListener(new UpgradeListener() {
 
 			@Override
@@ -173,11 +183,7 @@ final Upgrader upgrader = new Upgrader(
 			public void onCheckNewVersion(boolean hasNew,
 					int serverVersionCode, String serverVersion,
 					String serverVersionDescription) {
-				Log.d("Upgrader", "onCheckNewVersion:hasNew=" + hasNew
-						+ ",serverVersionCode=" + serverVersionCode
-						+ ",serverVersion=" + serverVersion + ",des="
-						+ serverVersionDescription);
-
+				//若有新版本，则hasNew为true，此时调用下载即可
 				if (hasNew)
 					upgrader.download();
 			}
@@ -189,4 +195,4 @@ final Upgrader upgrader = new Upgrader(
 		});
 
 		upgrader.checkNewVersion();
-	```
+```
