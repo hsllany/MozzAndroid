@@ -26,9 +26,11 @@ public class HttpUtils {
 	 */
 	protected static ExecutorService httpExecutor;
 
+	protected static int THREAD_POOL_SIZE = 5;
+
 	public HttpUtils() {
 		if (httpExecutor == null) {
-			httpExecutor = Executors.newFixedThreadPool(5);
+			httpExecutor = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
 		}
 	}
 
@@ -56,7 +58,7 @@ public class HttpUtils {
 	/**
 	 * @see release()
 	 */
-	public void releaseExecutor() {
+	public void releaseHttp() {
 		release();
 	}
 

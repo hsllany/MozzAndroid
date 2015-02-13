@@ -1,7 +1,9 @@
 package com.mozzandroidutils.sqlite;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
+
+import com.mozzandroidutils.file.ObjectByte;
 
 import android.content.Context;
 import android.database.Cursor;
@@ -252,9 +254,19 @@ public abstract class Eloquent<T extends Model> {
 				for (int i = 0; i < fieldLength; i++) {
 					String fieldName = fields[i];
 					Object value = t.fieldValue(fieldName);
-					if (value != null && mColumn.contains(fieldName)) {
+					if (value != null && mColumn.containsKey(fieldName)) {
 						sb.append(fieldName);
-						valueSb.append("'" + value.toString() + "'");
+						ColumnType type = mColumn.get(fieldName);
+						if (type == ColumnType.TYPE_BLOB) {
+							byte[] valueByte = ObjectByte.toByteArray(value);
+
+							for (int j = 0; j < valueByte.length; j++) {
+								valueSb.append(valueByte[j]);
+							}
+						} else {
+							valueSb.append("'" + value.toString() + "'");
+
+						}
 
 						if (i < fieldLength - 1) {
 							sb.append(",");
@@ -278,8 +290,21 @@ public abstract class Eloquent<T extends Model> {
 				for (int i = 0; i < fieldLength; i++) {
 					String fieldName = fields[i];
 					Object value = t.fieldValue(fieldName);
-					if (value != null && mColumn.contains(fieldName)) {
-						sb.append(fieldName + " = '" + value.toString() + "'");
+					if (value != null && mColumn.containsKey(fieldName)) {
+						ColumnType type = mColumn.get(fieldName);
+
+						if (type == ColumnType.TYPE_BLOB) {
+							sb.append(fieldName + "=");
+							byte[] valueByte = ObjectByte.toByteArray(value);
+
+							for (int j = 0; j < valueByte.length; j++) {
+								sb.append(valueByte[j]);
+							}
+
+						} else {
+							sb.append(fieldName + " = '" + value.toString()
+									+ "'");
+						}
 
 						if (i < fieldLength - 1) {
 							sb.append(",");
@@ -303,53 +328,37 @@ public abstract class Eloquent<T extends Model> {
 	}
 
 	private void setField(T t, String fieldName, Object value) {
-		t.setField(fieldName, value);
+		if (value instanceof Number || value instanceof String
+				|| value instanceof byte[])
+			t.setField(fieldName, value);
+
 	}
 
 	private void checkTableExistAndColumn() {
 		Cursor cursor = null;
 		synchronized (mDatabase) {
 			cursor = mDatabase.rawQuery(
-					"select count(*) from sqlite_master where type = 'table' and name = '"
+					"select sql from sqlite_master where type = 'table' and name = '"
 							+ mTableName + "';", null);
 		}
 		if (cursor.moveToFirst()) {
-			if (cursor.getInt(0) > 0)
-				mTableExist = true;
+			mTableExist = true;
+			mColumn.clear();
+			String createSQL = cursor.getString(0);
+			mColumn = createSQLParser(createSQL);
+
 		}
 
 		if (cursor != null)
 			cursor.close();
 
-		synchronized (mColumn) {
-			mColumn.clear();
-		}
-
-		if (mTableExist) {
-
-			synchronized (mDatabase) {
-				cursor = mDatabase.rawQuery("select * from " + mTableName
-						+ " limit 1", null);
-			}
-			int columnCount = cursor.getColumnCount();
-
-			for (int i = 0; i < columnCount; i++) {
-				String columnName = cursor.getColumnName(i);
-				synchronized (mColumn) {
-					mColumn.add(columnName);
-				}
-			}
-
-			if (cursor != null)
-				if (!cursor.isClosed())
-					cursor.close();
-		}
 	}
 
 	public boolean delete(T t) {
 		if (t.hasSetId() && mTableExist) {
 			String deleteSQL = "delete from table " + mTableName + " where "
 					+ ID_COLUMN + " = " + t._id;
+			debug(deleteSQL);
 
 			synchronized (mDatabase) {
 				mDatabase.execSQL(deleteSQL);
@@ -363,6 +372,7 @@ public abstract class Eloquent<T extends Model> {
 	public void drop() {
 		if (mTableExist) {
 			String dropSQL = "drop table " + mTableName;
+			debug(dropSQL);
 			synchronized (mDatabase) {
 				mDatabase.execSQL(dropSQL);
 			}
@@ -394,6 +404,43 @@ public abstract class Eloquent<T extends Model> {
 			mOpenDebug = false;
 	}
 
+	public static Map<String, ColumnType> createSQLParser(String createSQL) {
+		createSQL = createSQL.substring(createSQL.indexOf('(') + 1,
+				createSQL.length() - 1);
+
+		String[] parts = createSQL.split(",");
+		HashMap<String, ColumnType> columnTypes = new HashMap<String, ColumnType>();
+		for (int i = 0; i < parts.length; i++) {
+			String[] singleColumn = parts[i].split(" ");
+			String keys = singleColumn[0];
+
+			int otherChar = singleColumn[1].indexOf('(');
+			String typeString = singleColumn[1].toLowerCase();
+
+			ColumnType type = null;
+
+			if (otherChar > 0)
+				typeString = singleColumn[1].substring(0, otherChar)
+						.toLowerCase();
+
+			if (typeString.equals("float") || typeString.equals("double")
+					|| typeString.equals("real")) {
+				type = ColumnType.TYPE_REAL;
+			} else if (typeString.equals("integer")
+					|| typeString.equals("short")) {
+				type = ColumnType.TYPE_INTEGER;
+			} else if (typeString.equals("blob")) {
+				type = ColumnType.TYPE_BLOB;
+			} else if (typeString.equals("text")) {
+				type = ColumnType.TYPE_TEXT;
+			}
+
+			columnTypes.put(keys, type);
+		}
+
+		return columnTypes;
+	}
+
 	private void debug(String debugInfo) {
 		if (mOpenDebug)
 			Log.d(DEBUG_TAG, debugInfo);
@@ -402,11 +449,9 @@ public abstract class Eloquent<T extends Model> {
 	protected String mTableName = null;
 	private SQLiteDatabase mDatabase;
 
-	private List<String> mColumn = new ArrayList<String>();
+	private Map<String, ColumnType> mColumn = new HashMap<String, ColumnType>();
 	private boolean mTableExist = false;
-
 	private boolean mReadOnly = false;
-
 	private boolean mOpenDebug = true;
 
 }

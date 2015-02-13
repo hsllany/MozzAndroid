@@ -79,4 +79,25 @@ public abstract class Model {
 		return fieldsString;
 	}
 
+	public String toJson() {
+		StringBuilder jsonBuilder = new StringBuilder();
+		jsonBuilder.append("{\"id\": " + this._id + "");
+		String[] allFields = allOtherFields();
+
+		for (int i = 0; i < allFields.length; i++) {
+			String fieldName = allFields[i];
+			Object value = fieldValue(fieldName);
+			if (value instanceof Number) {
+				jsonBuilder.append(",\"" + fieldName + "\":" + value.toString()
+						+ "");
+			} else {
+				jsonBuilder.append(",\"" + fieldName + "\":\""
+						+ value.toString() + "\"");
+			}
+		}
+
+		jsonBuilder.append("}");
+		return jsonBuilder.toString();
+
+	}
 }
