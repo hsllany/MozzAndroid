@@ -6,8 +6,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
-public class ObjectByte {
-	public static byte[] toByteArray(Object obj) {
+public final class ObjectByte {
+	public final static byte[] toByteArray(Object obj) {
 		byte[] bytes = null;
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
 		try {
@@ -23,7 +23,7 @@ public class ObjectByte {
 		return bytes;
 	}
 
-	public static Object toObject(byte[] bytes) {
+	public final static Object toObject(byte[] bytes) {
 		Object obj = null;
 		try {
 			ByteArrayInputStream bis = new ByteArrayInputStream(bytes);

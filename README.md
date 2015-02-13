@@ -3,9 +3,9 @@ MozzAndroidUtils
 作者：hsllany@163.com, everyknoxkyo@gmail.com
 HttpUtils 用法
 -------------------
-HttpUtils运用了多线程，每个任务执行时是属于不同进程，所以不要在HttpListener或HttpDownloadListener中操纵UI,应运用Handler。
+HttpUtils为异步返回，每个任务执行时是属于不同线程，所以不应在HttpListener或HttpDownloadListener中操纵UI，应运用Handler。
 
-###get方法###
+###get 方法###
 ```
 HttpUtils httpUtils = new HttpUtils();
 httpUtils.get("http://www.baidu.com", new HttpListener() {
@@ -50,26 +50,26 @@ DownloaderHttpUtils downloader = new DownloaderHttpUtils();
 downloader.download("http://www.test.com/a.file", new HttpDownloadListener() {
 			
 	@Override
-	public void onSuccessFinish() {
-		// TODO Auto-generated method stub
+	public void onDownloadSuccess() {
+		//下载成功
 				
 	}
 			
 	@Override
-	public void onStart(int fileSize) {
-		// TODO Auto-generated method stub
+	public void onStartDownload(int fileSize) {
+		//开始下载，fileSize为要下载文件的大小
 				
 	}
 			
 	@Override
-	public void onFail() {
-		// TODO Auto-generated method stub
+	public void onDownloadFailed() {
+		//下载失败
 				
 	}
 			
 	@Override
 	public void onDownloading(int downloadSize) {
-		//可以计算已经下载的downloadSize
+		//正则下载，downloadSize为已经下载的大小
 				
 	}
 }, SDCard.sdCardDir() + "/saveDir");
@@ -85,21 +85,20 @@ DB用法
 class Student extends Model {
 	private String name;
 
-public void setName(String nm) {
+	public void setName(String nm) {
 		this.name = nm;
 	}
 }
 ```
 
-首先继承Eloquent（代表数据库中的表）, 类名的规则是：表名 + Eloquent
+然后，继承Eloquent（代表数据库中的表）, 类名的规则是：表名 + Eloquent。注意命名应和数据库中表明对应。
 
 ```
 class StudentsEloquent extends Eloquent<Student>{
 
 }
 ```
-
-此后就可以调用了。
+之后，运用如下：
 
 ###查询所有：###
 ```
@@ -137,3 +136,57 @@ Eloquent.create("student", new String[] { "name", "age" },
 				new COLUMN_TYPE[] { COLUMN_TYPE.TYPE_TEXT,
 						COLUMN_TYPE.TYPE_INTEGER }, this);
 ```
+
+客户端升级Upgrader
+--------------------
+使用Upgrader，可灵活对客户端进行升级。
+
+示例：
+```
+final Upgrader upgrader = new Upgrader(
+				"http://182.92.150.3/upgrade.json", this);
+		upgrader.setOnUpgradeListener(new UpgradeListener() {
+
+			@Override
+			public void onDownloadSuccess() {
+				Log.d("Upgrader", "successfully download");
+
+			}
+
+			@Override
+			public void onDownloadStart(int fileSize) {
+				Log.d("Upgrader", "onStartDownload:" + fileSize);
+
+			}
+
+			@Override
+			public void onDownloadFailed() {
+				Log.d("Upgrader", "onFailDownload:");
+			}
+
+			@Override
+			public void onDownloading(int downloadSize) {
+
+			}
+
+			@Override
+			public void onCheckNewVersion(boolean hasNew,
+					int serverVersionCode, String serverVersion,
+					String serverVersionDescription) {
+				Log.d("Upgrader", "onCheckNewVersion:hasNew=" + hasNew
+						+ ",serverVersionCode=" + serverVersionCode
+						+ ",serverVersion=" + serverVersion + ",des="
+						+ serverVersionDescription);
+
+				if (hasNew)
+					upgrader.download();
+			}
+
+			@Override
+			public void onCheckFailed() {
+				Log.d("Upgrader", "onCheckFailed:");
+			}
+		});
+
+		upgrader.checkNewVersion();
+	```

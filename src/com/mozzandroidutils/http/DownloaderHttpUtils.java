@@ -42,7 +42,7 @@ public class DownloaderHttpUtils extends HttpUtils {
 
 				fileSize = conn.getHeaderFieldInt("Content-Length", 0);
 
-				mListener.onStart(fileSize);
+				mListener.onDownloadStart(fileSize);
 
 				in = conn.getInputStream();
 				out = new FileOutputStream(mFile);
@@ -60,14 +60,14 @@ public class DownloaderHttpUtils extends HttpUtils {
 
 				}
 
-				mListener.onSuccessFinish();
+				mListener.onDownloadSuccess();
 			} catch (MalformedURLException e) {
 				e.printStackTrace();
-				mListener.onFail();
+				mListener.onDownloadFailed();
 			} catch (IOException e) {
 				mFile.delete();
 				e.printStackTrace();
-				mListener.onFail();
+				mListener.onDownloadFailed();
 			} finally {
 				if (in != null) {
 					try {

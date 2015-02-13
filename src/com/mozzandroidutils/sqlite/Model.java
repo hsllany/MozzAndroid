@@ -3,6 +3,8 @@ package com.mozzandroidutils.sqlite;
 import java.lang.reflect.Field;
 
 public abstract class Model {
+	private String DEBUG_TAG = this.getClass().getSimpleName();
+
 	int _id = -1;
 
 	public int id() {

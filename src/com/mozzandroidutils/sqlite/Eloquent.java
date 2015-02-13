@@ -55,8 +55,8 @@ public abstract class Eloquent<T extends Model> {
 		SQLiteDatabase database = MozzDB.writebleDatabase(context);
 		StringBuilder sb = new StringBuilder();
 
-		sb.append("create table if not exists " + tableName.toLowerCase());
-		sb.append(" (" + ID_COLUMN + " integer primary key autoincrement, ");
+		sb.append("CREATE TABLE IF NOT EXISTS " + tableName.toLowerCase());
+		sb.append(" (" + ID_COLUMN + " INTEGER PRIMARY KEY AUTOINCREMENT, ");
 
 		for (int i = 0; i < columnNames.length; i++) {
 			String type = types[i].toString();
@@ -93,22 +93,33 @@ public abstract class Eloquent<T extends Model> {
 	public Cursor all(ORDER order) {
 		if (mTableExist) {
 			if (order == ORDER.DESC) {
-				debug("SELECT * FROM " + mTableName + " order by " + ID_COLUMN
-						+ " desc");
+				debug("SELECT * FROM " + mTableName + " ORDER BY " + ID_COLUMN
+						+ " DESC");
 				Cursor cursor = mDatabase
-						.rawQuery("SELECT * FROM " + mTableName + " order by "
-								+ ID_COLUMN + " desc", null);
+						.rawQuery("SELECT * FROM " + mTableName + " ORDER BY "
+								+ ID_COLUMN + " DESC", null);
 				return cursor;
 			} else {
-				debug("SELECT * FROM " + mTableName + "order by " + ID_COLUMN);
+				debug("SELECT * FROM " + mTableName + "ORDER BY " + ID_COLUMN);
 				Cursor cursor = mDatabase.rawQuery("SELECT * FROM "
-						+ mTableName + "order by " + ID_COLUMN, null);
+						+ mTableName + "ORDER BY " + ID_COLUMN, null);
 				return cursor;
 			}
 		} else {
 
 			return null;
 		}
+	}
+
+	public Cursor where(String whereSQL) {
+
+		if (!mTableExist)
+			return null;
+
+		String selectSQL = "SELECT * FROM " + mTableName + " " + whereSQL;
+		debug(selectSQL);
+
+		return mDatabase.rawQuery(whereSQL, null);
 	}
 
 	public Cursor where(String[] keys, Object[] values) {
@@ -123,7 +134,7 @@ public abstract class Eloquent<T extends Model> {
 				sb.append("&");
 		}
 
-		String selectSQL = "select * from " + mTableName + " where "
+		String selectSQL = "SELECT * FROM " + mTableName + " WHERE "
 				+ sb.toString();
 		debug(selectSQL);
 		return mDatabase.rawQuery(selectSQL, null);
@@ -131,10 +142,10 @@ public abstract class Eloquent<T extends Model> {
 
 	public T Find(int id, T t) {
 		if (mTableExist) {
-			debug("SELECT * FROM " + mTableName + " where " + ID_COLUMN + " = "
+			debug("SELECT * FROM " + mTableName + " WHERE " + ID_COLUMN + " = "
 					+ id);
 			Cursor cursor = mDatabase.rawQuery("SELECT * FROM " + mTableName
-					+ " where " + ID_COLUMN + " = " + id, null);
+					+ " WHERE " + ID_COLUMN + " = " + id, null);
 
 			if (cursor.moveToFirst()) {
 				int columnCount = cursor.getColumnCount();
@@ -151,8 +162,9 @@ public abstract class Eloquent<T extends Model> {
 						break;
 
 					case Cursor.FIELD_TYPE_BLOB:
-						setField(t, columnName, cursor.getBlob(cursor
+						Object obj = ObjectByte.toObject(cursor.getBlob(cursor
 								.getColumnIndex(columnName)));
+						setField(t, columnName, obj);
 						break;
 
 					case Cursor.FIELD_TYPE_FLOAT:
@@ -220,15 +232,18 @@ public abstract class Eloquent<T extends Model> {
 	}
 
 	public boolean save(T t) {
+		if (mReadOnly)
+			return false;
+
 		if (mTableExist) {
 			boolean insertMode = true;
 			if (t.hasSetId()) {
 				Cursor cursor = null;
-				debug("SELECT * FROM " + mTableName + " where " + ID_COLUMN
+				debug("SELECT * FROM " + mTableName + " WHERE " + ID_COLUMN
 						+ " = " + t.id());
 				synchronized (mDatabase) {
 					cursor = mDatabase.rawQuery("SELECT * FROM " + mTableName
-							+ " where " + ID_COLUMN + " = " + t.id(), null);
+							+ " WHERE " + ID_COLUMN + " = " + t.id(), null);
 				}
 
 				if (cursor.moveToFirst()) {
@@ -312,8 +327,8 @@ public abstract class Eloquent<T extends Model> {
 					}
 				}
 
-				String upgrateSQL = "update " + mTableName + " set "
-						+ sb.toString() + " where " + ID_COLUMN + " = " + t._id;
+				String upgrateSQL = "UPDATE " + mTableName + " SET "
+						+ sb.toString() + " WHERE " + ID_COLUMN + " = " + t._id;
 				debug(upgrateSQL);
 				synchronized (mDatabase) {
 					mDatabase.execSQL(upgrateSQL);
@@ -338,7 +353,7 @@ public abstract class Eloquent<T extends Model> {
 		Cursor cursor = null;
 		synchronized (mDatabase) {
 			cursor = mDatabase.rawQuery(
-					"select sql from sqlite_master where type = 'table' and name = '"
+					"SELECT sql FROM sqlite_master WHERE type = 'table' AND name = '"
 							+ mTableName + "';", null);
 		}
 		if (cursor.moveToFirst()) {
@@ -355,8 +370,8 @@ public abstract class Eloquent<T extends Model> {
 	}
 
 	public boolean delete(T t) {
-		if (t.hasSetId() && mTableExist) {
-			String deleteSQL = "delete from table " + mTableName + " where "
+		if (t.hasSetId() && mTableExist && !mReadOnly) {
+			String deleteSQL = "DELETE FROM table " + mTableName + " WHERE "
 					+ ID_COLUMN + " = " + t._id;
 			debug(deleteSQL);
 
@@ -370,8 +385,8 @@ public abstract class Eloquent<T extends Model> {
 	}
 
 	public void drop() {
-		if (mTableExist) {
-			String dropSQL = "drop table " + mTableName;
+		if (mTableExist && !mReadOnly) {
+			String dropSQL = "DROP TABLE " + mTableName;
 			debug(dropSQL);
 			synchronized (mDatabase) {
 				mDatabase.execSQL(dropSQL);

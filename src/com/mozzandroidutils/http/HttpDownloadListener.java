@@ -1,11 +1,11 @@
 package com.mozzandroidutils.http;
 
 public interface HttpDownloadListener {
-	public void onStart(int fileSize);
+	public void onDownloadStart(int fileSize);
 
 	public void onDownloading(int downloadSize);
 
-	public void onSuccessFinish();
+	public void onDownloadSuccess();
 
-	public void onFail();
+	public void onDownloadFailed();
 }

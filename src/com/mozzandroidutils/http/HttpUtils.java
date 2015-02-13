@@ -21,6 +21,7 @@ import java.util.concurrent.Executors;
  * 
  */
 public class HttpUtils {
+	private String DEBUG_TAG = this.getClass().getSimpleName();
 	/**
 	 * The executor for run http request
 	 */

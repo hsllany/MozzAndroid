@@ -1,7 +1,10 @@
 package com.mozzandroidutils.file;
 
+import java.io.File;
+
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Bundle;
@@ -21,8 +24,15 @@ public class MozzConfig {
 	 *            , Context
 	 * @return AppDir, String
 	 */
-	public static String getAppDir(Context context) {
-		return (String) getMetaData(context, "YD_APP_DIR");
+	public static String getAppAbsoluteDir(Context context) {
+		return SDCard.sdCardDir() + (String) getMetaData(context, "YD_APP_DIR")
+				+ File.separator;
+	}
+
+	public static void makeAppDirs(Context context) {
+		File file = new File(getAppAbsoluteDir(context));
+		if (!file.exists())
+			file.mkdirs();
 	}
 
 	/**
@@ -63,4 +73,27 @@ public class MozzConfig {
 
 		return metaData;
 	}
+
+	public static int getPackageVersionCode(Context context) {
+		try {
+			PackageInfo pi = context.getPackageManager().getPackageInfo(
+					context.getPackageName(), 0);
+			return pi.versionCode;
+		} catch (NameNotFoundException e) {
+			e.printStackTrace();
+			return 0;
+		}
+	}
+
+	public static String getPackageVersionName(Context context) {
+		try {
+			PackageInfo pi = context.getPackageManager().getPackageInfo(
+					context.getPackageName(), 0);
+			return pi.versionName;
+		} catch (NameNotFoundException e) {
+			e.printStackTrace();
+			return "";
+		}
+	}
+
 }
