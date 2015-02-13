@@ -9,6 +9,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 
 import com.mozzandroidutils.file.MozzConfig;
+import com.mozzandroidutils.http.HttpDownloadListener;
 import com.mozzandroidutils.http.UpgradeListener;
 import com.mozzandroidutils.http.Upgrader;
 import com.mozzandroidutils.sqlite.ColumnType;
@@ -42,38 +43,21 @@ public class MainActivity extends Activity implements OnClickListener {
 		upgrader.setOnUpgradeListener(new UpgradeListener() {
 
 			@Override
-			public void onDownloadSuccess() {
-				Log.d("Upgrader", "successfully download");
+			public void onNewVersion(int serverVersionCode,
+					String serverVersion, String serverVersionDescription) {
 
+				try {
+					upgrader.download(null,
+							MozzConfig.getAppAbsoluteDir(MainActivity.this),
+							"newVersion.apk");
+				} catch (IllegalAccessException e) {
+					e.printStackTrace();
+				}
 			}
 
 			@Override
-			public void onDownloadStart(int fileSize) {
-				Log.d("Upgrader", "onStartDownload:" + fileSize);
-
-			}
-
-			@Override
-			public void onDownloadFailed() {
-				Log.d("Upgrader", "onFailDownload:");
-			}
-
-			@Override
-			public void onDownloading(int downloadSize) {
-
-			}
-
-			@Override
-			public void onCheckNewVersion(boolean hasNew,
-					int serverVersionCode, String serverVersion,
-					String serverVersionDescription) {
-				Log.d("Upgrader", "onCheckNewVersion:hasNew=" + hasNew
-						+ ",serverVersionCode=" + serverVersionCode
-						+ ",serverVersion=" + serverVersion + ",des="
-						+ serverVersionDescription);
-
-				if (hasNew)
-					upgrader.download();
+			public void onNoNewVersion() {
+				Log.d("Upgrader", "onNoNewVersion");
 			}
 
 			@Override
@@ -83,6 +67,37 @@ public class MainActivity extends Activity implements OnClickListener {
 		});
 
 		upgrader.checkNewVersion();
+
+		try {
+			upgrader.download(new HttpDownloadListener() {
+
+				@Override
+				public void onDownloading(int downloadSize) {
+					// TODO Auto-generated method stub
+
+				}
+
+				@Override
+				public void onDownloadSuccess() {
+					// TODO Auto-generated method stub
+
+				}
+
+				@Override
+				public void onDownloadStart(int fileSize) {
+					// TODO Auto-generated method stub
+
+				}
+
+				@Override
+				public void onDownloadFailed() {
+					// TODO Auto-generated method stub
+
+				}
+			}, "/AppDir", "newVersion.apk");
+		} catch (IllegalAccessException e) {
+			e.printStackTrace();
+		}
 
 	}
 

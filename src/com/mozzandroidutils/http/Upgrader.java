@@ -1,5 +1,7 @@
 package com.mozzandroidutils.http;
 
+import java.io.File;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -32,19 +34,13 @@ public class Upgrader {
 								.getString("versionName");
 						String serverVersionDescription = jsonObject
 								.getString("des");
-						mDownloadUrl = jsonObject.getString("downloadurl");
-						synchronized (lockObject) {
-							lockObject.notifyAll();
-						}
 
 						if (MozzConfig.getPackageVersionCode(mContext) < serverCode) {
-							mUpgradeListener.onCheckNewVersion(true,
-									serverCode, serverVersion,
-									serverVersionDescription);
+							mDownloadUrl = jsonObject.getString("downloadurl");
+							mUpgradeListener.onNewVersion(serverCode,
+									serverVersion, serverVersionDescription);
 						} else {
-							mUpgradeListener.onCheckNewVersion(false,
-									serverCode, serverVersion,
-									serverVersionDescription);
+							mUpgradeListener.onNoNewVersion();
 						}
 
 					} catch (JSONException e) {
@@ -66,45 +62,14 @@ public class Upgrader {
 		});
 	}
 
-	public void download() {
+	public void download(HttpDownloadListener l, String path, String fileName)
+			throws IllegalAccessException {
 		if (mDownloadUrl == null) {
-			checkNewVersion();
-
-			try {
-				synchronized (lockObject) {
-					lockObject.wait();
-				}
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
+			throw new IllegalAccessException(
+					"download URL is null, please make sure that download() can be only invoked after checkNewVersion() success which is guaranteed by the onNewVersion().");
 		}
 
-		mHttp.download(mDownloadUrl, new HttpDownloadListener() {
-
-			@Override
-			public void onDownloading(int downloadSize) {
-				if (mUpgradeListener != null)
-					mUpgradeListener.onDownloading(downloadSize);
-			}
-
-			@Override
-			public void onDownloadStart(int fileSize) {
-				if (mUpgradeListener != null)
-					mUpgradeListener.onDownloadStart(fileSize);
-			}
-
-			@Override
-			public void onDownloadSuccess() {
-				if (mUpgradeListener != null)
-					mUpgradeListener.onDownloadSuccess();
-			}
-
-			@Override
-			public void onDownloadFailed() {
-				if (mUpgradeListener != null)
-					mUpgradeListener.onDownloadFailed();
-			}
-		}, MozzConfig.getAppAbsoluteDir(mContext) + "newVersion.apk");
+		mHttp.download(mDownloadUrl, l, path, fileName);
 	}
 
 	private String mUpgradeUrl;
@@ -112,6 +77,4 @@ public class Upgrader {
 	private Context mContext;
 	private DownloaderHttpUtils mHttp;
 	private UpgradeListener mUpgradeListener;
-
-	private Object lockObject = new Object();
 }

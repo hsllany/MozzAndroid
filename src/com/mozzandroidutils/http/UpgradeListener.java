@@ -1,6 +1,6 @@
 package com.mozzandroidutils.http;
 
-public interface UpgradeListener extends HttpDownloadListener {
+public interface UpgradeListener {
 	/**
 	 * check if there is new version.
 	 * 
@@ -13,8 +13,10 @@ public interface UpgradeListener extends HttpDownloadListener {
 	 * @param serverVersionDescription
 	 *            , server version description
 	 */
-	public void onCheckNewVersion(boolean hasNew, int serverVersionCode,
-			String serverVersion, String serverVersionDescription);
+	public void onNewVersion(int serverVersionCode, String serverVersion,
+			String serverVersionDescription);
+
+	public void onNoNewVersion();
 
 	/**
 	 * check failed due to network problems.

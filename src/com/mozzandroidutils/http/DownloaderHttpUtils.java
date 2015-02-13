@@ -13,9 +13,11 @@ public class DownloaderHttpUtils extends HttpUtils {
 	class HttpDownloaderTast implements Runnable {
 
 		public HttpDownloaderTast(String url, HttpDownloadListener l,
-				String path) {
+				String path, String fileName) {
 			mListener = l;
 			mUrl = url;
+			if (!path.endsWith(File.separator))
+				path = path + File.separator;
 			mPath = path;
 
 			buffer = new byte[8 * 1024];
@@ -97,7 +99,8 @@ public class DownloaderHttpUtils extends HttpUtils {
 
 	}
 
-	public void download(String url, HttpDownloadListener l, String path) {
-		httpExecutor.execute(new HttpDownloaderTast(url, l, path));
+	public void download(String url, HttpDownloadListener l, String path,
+			String fileName) {
+		httpExecutor.execute(new HttpDownloaderTast(url, l, path, fileName));
 	}
 }

@@ -79,7 +79,7 @@ downloader.download("http://www.test.com/a.file", new HttpDownloadListener() {
 
 DB用法
 --------------------
-*由Mozz框架运行的表中，必须含有字段"_id",表示主键。*
+**由Mozz框架运行的表中，必须含有字段"_id",表示主键。**
 
 首先继承Model类，此类代表的是表中每行的数据，在其添加与表中字段一致的属性（_id不用添加）。
 
@@ -155,44 +155,65 @@ Eloquent.create("student", new String[] { "name", "age" },
 				
 		//定义回调接口，处理升级
 		upgrader.setOnUpgradeListener(new UpgradeListener() {
-
 			@Override
-			public void onDownloadSuccess() {
-				Log.d("Upgrader", "successfully download");
+			public void onNewVersion(int serverVersionCode,
+					String serverVersion, String serverVersionDescription) {
 
+				try {
+					upgrader.download(null,
+							MozzConfig.getAppAbsoluteDir(MainActivity.this),
+							"newVersion.apk");
+				} catch (IllegalAccessException e) {
+					e.printStackTrace();
+				}
 			}
 
 			@Override
-			public void onDownloadStart(int fileSize) {
-				Log.d("Upgrader", "onStartDownload:" + fileSize);
-
-			}
-
-			@Override
-			public void onDownloadFailed() {
-				Log.d("Upgrader", "onFailDownload:");
-			}
-
-			@Override
-			public void onDownloading(int downloadSize) {
-
-			}
-
-			@Override
-			public void onCheckNewVersion(boolean hasNew,
-					int serverVersionCode, String serverVersion,
-					String serverVersionDescription) {
-				//若有新版本，则hasNew为true，此时调用下载即可
-				if (hasNew)
-					upgrader.download();
+			public void onNoNewVersion() {
+				Log.d("Upgrader", "onNoNewVersion");
 			}
 
 			@Override
 			public void onCheckFailed() {
 				Log.d("Upgrader", "onCheckFailed:");
 			}
+			
 		});
 
 		//检查新版本
 		upgrader.checkNewVersion();
+```
+检测完新版本后，如果确认有新版本，可调用upgrader.download()直接发起下载。**但若无新版本，调用download()，会触发IllegalAccessException**
+```java
+try {
+			//确保在检测到新版本后发起
+			upgrader.download(new HttpDownloadListener() {
+
+				@Override
+				public void onDownloading(int downloadSize) {
+					// TODO Auto-generated method stub
+
+				}
+
+				@Override
+				public void onDownloadSuccess() {
+					// TODO Auto-generated method stub
+
+				}
+
+				@Override
+				public void onDownloadStart(int fileSize) {
+					// TODO Auto-generated method stub
+
+				}
+
+				@Override
+				public void onDownloadFailed() {
+					// TODO Auto-generated method stub
+
+				}
+			}, "/AppDir", "newVersion.apk");
+		} catch (IllegalAccessException e) {
+			e.printStackTrace();
+		}
 ```
