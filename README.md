@@ -143,16 +143,15 @@ Eloquent.create("student", new String[] { "name", "age" },
 --------------------
 使用Upgrader，可灵活对客户端进行升级。
 
-服务器应对应配置升级用json,示例如下：
+服务器应对应配置升级用json，示例如下：
 ```json
 {"versionCode":3, "versionName":"1.1.1", "des":"2015年的新版本", "downloadurl":"http://test.com/test.apk"}
 ```
-这里code为版本对应编号，应大于AndroidManifest。xml中的versionCode，否则不会触发onCheckNewVersion中hasNew为true的情况。具体见下：
-示例：
+这里code为版本对应编号，应大于AndroidManifest。xml中的versionCode，否则不会触发onCheckNewVersion中hasNew为true的情况，具体见下：
 ```java
 		//定义upgrader,传入升级网址
 		final Upgrader upgrader = new Upgrader(
-				"http://182.92.150.3/upgrade.json", this);
+				"http://test.com/upgrade.json", this);
 				
 		//定义回调接口，处理升级
 		upgrader.setOnUpgradeListener(new UpgradeListener() {
@@ -194,5 +193,6 @@ Eloquent.create("student", new String[] { "name", "age" },
 			}
 		});
 
+		//检查新版本
 		upgrader.checkNewVersion();
 ```
