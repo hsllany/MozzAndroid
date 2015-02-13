@@ -110,7 +110,7 @@ Cursor cursor = students.all();
 
 ###带Where的查找###
 ```java
-Cursor cursor = studentTable.where({'name'},{'zhangdao'});
+Cursor cursor = studentTable.where(new String[]{'name'},new String[]{'zhangdao'});
 ```
 
 ###查找id,并更新###
