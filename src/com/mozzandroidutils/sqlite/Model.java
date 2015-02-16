@@ -1,9 +1,15 @@
 package com.mozzandroidutils.sqlite;
 
-import java.lang.reflect.Field;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map.Entry;
+import java.util.Set;
 
-public abstract class Model {
-	private String DEBUG_TAG = this.getClass().getSimpleName();
+public class Model {
+
+	public Model() {
+		mField = new HashMap<String, Object>();
+	}
 
 	int id = -1;
 
@@ -17,78 +23,35 @@ public abstract class Model {
 		return false;
 	}
 
-	boolean setField(String fieldName, Object obj) {
-		Class<? extends Model> thisClass = this.getClass();
-
-		try {
-			if (fieldName.equals("_id")) {
-				Class<?> superClass = thisClass.getSuperclass();
-				Field field = superClass.getDeclaredField("_id");
-				field.setAccessible(true);
-				field.set(this, obj);
-			} else {
-				Field field = thisClass.getDeclaredField(fieldName);
-				field.setAccessible(true);
-				field.set(this, obj);
-			}
-		} catch (NoSuchFieldException e) {
-			e.printStackTrace();
-			return false;
-		} catch (IllegalAccessException e) {
-			e.printStackTrace();
-			return false;
-		} catch (IllegalArgumentException e) {
-			e.printStackTrace();
-			return false;
-		}
-
-		return true;
+	public void set(String fieldName, Object obj) {
+		mField.put(fieldName, obj);
 	}
 
-	Object fieldValue(String fieldName) {
-		Class<? extends Model> thisClass = this.getClass();
-		try {
-			if (fieldName.equals("_id")) {
-				Class<?> superClass = thisClass.getSuperclass();
-				Field field = superClass.getDeclaredField("_id");
-				field.setAccessible(true);
-				return field.get(this);
-			} else {
-				Field field = thisClass.getDeclaredField(fieldName);
-				field.setAccessible(true);
-				return field.get(this);
-			}
-		} catch (NoSuchFieldException e) {
-			e.printStackTrace();
-		} catch (IllegalAccessException e) {
-			e.printStackTrace();
-		} catch (IllegalArgumentException e) {
-			e.printStackTrace();
-		}
-
-		return null;
+	public Object get(String fieldName) {
+		return mField.get(fieldName);
 	}
 
-	String[] allOtherFields() {
-		Class<? extends Model> thisClass = this.getClass();
-		Field[] fields = thisClass.getDeclaredFields();
-		String[] fieldsString = new String[fields.length];
+	Set<String> allOtherFields() {
+		return mField.keySet();
+	}
 
-		for (int i = 0; i < fields.length; i++) {
-			fieldsString[i] = fields[i].getName();
-		}
-
-		return fieldsString;
+	Set<Entry<String, Object>> fieldsAndValues() {
+		return mField.entrySet();
 	}
 
 	public String toJson() {
 		StringBuilder jsonBuilder = new StringBuilder();
 		jsonBuilder.append("{\"id\": " + this.id + "");
-		String[] allFields = allOtherFields();
+		Set<Entry<String, Object>> entrySet = fieldsAndValues();
 
-		for (int i = 0; i < allFields.length; i++) {
-			String fieldName = allFields[i];
-			Object value = fieldValue(fieldName);
+		Iterator<Entry<String, Object>> it = entrySet.iterator();
+
+		while (it.hasNext()) {
+			Entry<String, Object> entry = it.next();
+
+			String fieldName = entry.getKey();
+
+			Object value = entry.getValue();
 			if (value instanceof Number) {
 				jsonBuilder.append(",\"" + fieldName + "\":" + value.toString()
 						+ "");
@@ -100,6 +63,13 @@ public abstract class Model {
 
 		jsonBuilder.append("}");
 		return jsonBuilder.toString();
-
 	}
+
+	@Override
+	public String toString() {
+		return toJson();
+	}
+
+	private HashMap<String, Object> mField;
+	String mTable = null;
 }

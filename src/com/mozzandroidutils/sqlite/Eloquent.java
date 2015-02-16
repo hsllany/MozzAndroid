@@ -1,7 +1,10 @@
 package com.mozzandroidutils.sqlite;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
+import java.util.Map.Entry;
 
 import com.mozzandroidutils.file.ObjectByte;
 
@@ -17,7 +20,7 @@ import android.util.Log;
  * 
  * @param <T>, ±ÿ–Î «Model¿‡ºÃ≥–
  */
-public abstract class Eloquent<T extends Model> {
+public abstract class Eloquent {
 
 	private String DEBUG_TAG = this.getClass().getSimpleName();
 
@@ -141,15 +144,19 @@ public abstract class Eloquent<T extends Model> {
 		return mDatabase.rawQuery(selectSQL, null);
 	}
 
-	public T find(int id, T t) {
+	public Model find(int id) {
 
 		if (mTableExist) {
+
 			debug("SELECT * FROM " + mTableName + " WHERE " + ID_COLUMN + " = "
 					+ id);
 			Cursor cursor = mDatabase.rawQuery("SELECT * FROM " + mTableName
 					+ " WHERE " + ID_COLUMN + " = " + id, null);
 
 			if (cursor.moveToFirst()) {
+
+				Model model = new Model();
+
 				int columnCount = cursor.getColumnCount();
 
 				for (int i = 0; i < columnCount; i++) {
@@ -159,34 +166,38 @@ public abstract class Eloquent<T extends Model> {
 
 					switch (columnType) {
 					case Cursor.FIELD_TYPE_INTEGER:
-						setField(t, columnName, cursor.getInt(cursor
+						setField(model, columnName, cursor.getInt(cursor
 								.getColumnIndex(columnName)));
 						break;
 
 					case Cursor.FIELD_TYPE_BLOB:
 						Object obj = ObjectByte.toObject(cursor.getBlob(cursor
 								.getColumnIndex(columnName)));
-						setField(t, columnName, obj);
+						setField(model, columnName, obj);
 						break;
 
 					case Cursor.FIELD_TYPE_FLOAT:
-						setField(t, columnName, cursor.getFloat(cursor
+						setField(model, columnName, cursor.getFloat(cursor
 								.getColumnIndex(columnName)));
 						break;
 
 					case Cursor.FIELD_TYPE_STRING:
-						setField(t, columnName, cursor.getString(cursor
+						setField(model, columnName, cursor.getString(cursor
 								.getColumnIndex(columnName)));
 						break;
 
 					case Cursor.FIELD_TYPE_NULL:
-						setField(t, columnName, null);
+						setField(model, columnName, null);
 						break;
 					}
 				}
+				model.id = id;
+				model.mTable = mTableName;
+				return model;
 			}
-			t.id = id;
-			return t;
+
+			return null;
+
 		} else {
 			return null;
 		}
@@ -233,7 +244,7 @@ public abstract class Eloquent<T extends Model> {
 		mTableName = tableName.toLowerCase();
 	}
 
-	public boolean save(T t) {
+	public boolean save(Model t) {
 		if (mReadOnly)
 			return false;
 
@@ -265,12 +276,19 @@ public abstract class Eloquent<T extends Model> {
 				sb.append("insert into " + mTableName + "(");
 				valueSb.append(") values(");
 
-				String[] fields = t.allOtherFields();
-				int fieldLength = fields.length;
+				Set<Entry<String, Object>> entrySet = t.fieldsAndValues();
+				Iterator<Entry<String, Object>> it = entrySet.iterator();
 
-				for (int i = 0; i < fieldLength; i++) {
-					String fieldName = fields[i];
-					Object value = t.fieldValue(fieldName);
+				int i = 0;
+				while (it.hasNext()) {
+					if (i > 0) {
+						sb.append(",");
+						valueSb.append(",");
+					}
+					Entry<String, Object> entry = it.next();
+					String fieldName = entry.getKey();
+					Object value = entry.getValue();
+
 					if (value != null && mColumn.containsKey(fieldName)) {
 						sb.append(fieldName);
 						ColumnType type = mColumn.get(fieldName);
@@ -284,11 +302,6 @@ public abstract class Eloquent<T extends Model> {
 							valueSb.append("'" + value.toString() + "'");
 
 						}
-
-						if (i < fieldLength - 1) {
-							sb.append(",");
-							valueSb.append(",");
-						}
 					}
 				}
 
@@ -301,12 +314,20 @@ public abstract class Eloquent<T extends Model> {
 				return true;
 			} else {
 				StringBuilder sb = new StringBuilder();
-				String[] fields = t.allOtherFields();
-				int fieldLength = fields.length;
+				Set<Entry<String, Object>> entrySet = t.fieldsAndValues();
+				Iterator<Entry<String, Object>> it = entrySet.iterator();
 
-				for (int i = 0; i < fieldLength; i++) {
-					String fieldName = fields[i];
-					Object value = t.fieldValue(fieldName);
+				int i = 0;
+
+				while (it.hasNext()) {
+
+					if (i > 0)
+						sb.append(",");
+
+					Entry<String, Object> entry = it.next();
+					String fieldName = entry.getKey();
+					Object value = entry.getValue();
+
 					if (value != null && mColumn.containsKey(fieldName)) {
 						ColumnType type = mColumn.get(fieldName);
 
@@ -323,9 +344,6 @@ public abstract class Eloquent<T extends Model> {
 									+ "'");
 						}
 
-						if (i < fieldLength - 1) {
-							sb.append(",");
-						}
 					}
 				}
 
@@ -344,10 +362,14 @@ public abstract class Eloquent<T extends Model> {
 		}
 	}
 
-	private void setField(T t, String fieldName, Object value) {
+	private void setField(Model t, String fieldName, Object value)
+			throws IllegalArgumentException {
 		if (value instanceof Number || value instanceof String
 				|| value instanceof byte[])
-			t.setField(fieldName, value);
+			t.set(fieldName, value);
+		else
+			throw new IllegalArgumentException(
+					"value must be instance of Number, String, or byte[]");
 
 	}
 
@@ -371,7 +393,7 @@ public abstract class Eloquent<T extends Model> {
 
 	}
 
-	public boolean delete(T t) {
+	public boolean delete(Model t) {
 		if (t.hasSetId() && mTableExist && !mReadOnly) {
 			String deleteSQL = "DELETE FROM table " + mTableName + " WHERE "
 					+ ID_COLUMN + " = " + t.id;

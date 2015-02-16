@@ -2,7 +2,7 @@ package com.mozzandroidutils.sqlite;
 
 import android.content.Context;
 
-public class ReadOnlyEloquent<T extends Model> extends Eloquent<T> {
+public class ReadOnlyEloquent extends Eloquent {
 
 	public ReadOnlyEloquent(Context context) {
 		super(context, true);

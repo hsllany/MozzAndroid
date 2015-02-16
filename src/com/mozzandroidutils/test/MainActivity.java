@@ -1,5 +1,7 @@
 package com.mozzandroidutils.test;
 
+import java.util.HashMap;
+
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -23,7 +25,13 @@ public class MainActivity extends Activity implements OnClickListener {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		MozzConfig.makeAppDirs(this);
-		testEloquentCreate();
+		HashMap<String, Object> testHash = new HashMap<String, Object>();
+
+		testHash.put("hello world", new Integer(3));
+
+		String a = "hello world";
+		a.hashCode();
+		testHash.get(a);
 
 	}
 
@@ -46,9 +54,9 @@ public class MainActivity extends Activity implements OnClickListener {
 
 		StudentsEloquent studentTable = new StudentsEloquent(this);
 
-		Student student = studentTable.find(7, new Student());
+		Model student = studentTable.find(7);
 
-		System.out.println(student.extra);
+		System.out.println(student.get("extra"));
 
 	}
 
@@ -117,21 +125,7 @@ public class MainActivity extends Activity implements OnClickListener {
 	}
 }
 
-class Student extends Model {
-	public String name = "zhangdao";
-
-	public String gender = "male";
-
-	public int age = 13;
-
-	public String extra = "hello world";
-
-	public void setName(String nm) {
-		this.name = nm;
-	}
-}
-
-class StudentsEloquent extends Eloquent<Student> {
+class StudentsEloquent extends Eloquent {
 
 	public StudentsEloquent(Context context) {
 		super(context);
