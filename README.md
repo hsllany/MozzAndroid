@@ -79,21 +79,9 @@ downloader.download("http://www.test.com/a.file", new HttpDownloadListener() {
 
 DB用法
 --------------------
-**由Mozz框架运行的表中，必须含有字段"_id",表示主键。**
+**由Mozz框架运行的表中，必须含有字段"id",表示主键。**
 
-首先继承Model类，此类代表的是表中每行的数据，在其添加与表中字段一致的属性（_id不用添加）。
-
-```java
-class Student extends Model {
-	private String name;
-
-	public void setName(String nm) {
-		this.name = nm;
-	}
-}
-```
-
-然后，继承Eloquent（代表数据库中的表）, 类名的规则是：表名 + Eloquent。注意命名应和数据库中表明对应。
+首先，继承Eloquent（代表数据库中的表）, 类名的规则是：表名 + Eloquent。注意命名应和数据库中表明对应。
 
 ```java
 class StudentsEloquent extends Eloquent<Student>{
@@ -115,15 +103,15 @@ Cursor cursor = studentTable.where(new String[]{'name'},new String[]{'zhangdao'}
 
 ###查找id,并更新###
 ```java
-Student student = studentTable.find(1, new Student());
-student.name = "zhangdao";
+Model student = studentTable.find(1);
+student.set("name","zhangdao");
 studentTable.save(student);
 ```
 
 ###插入新数据###
 ```java
-Student student = new Student();
-student.name = "zhangdao";
+Model student = new Student();
+student.set("name","zhangdao");
 studentTable.save(student);
 ```
 
@@ -137,6 +125,13 @@ studentTable.delete(student);
 Eloquent.create("student", new String[] { "name", "age" },
 				new COLUMN_TYPE[] { COLUMN_TYPE.TYPE_TEXT,
 						COLUMN_TYPE.TYPE_INTEGER }, this);
+```
+
+###从Model中获取值###
+```java
+Model student = studentTable.find(7);
+System.out.println(student.get("id"));
+System.out.println(student.get("name"));
 ```
 
 客户端升级Upgrader

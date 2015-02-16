@@ -28,6 +28,8 @@ public class Model {
 	}
 
 	public Object get(String fieldName) {
+		if (fieldName.equalsIgnoreCase("id"))
+			return id();
 		return mField.get(fieldName);
 	}
 
