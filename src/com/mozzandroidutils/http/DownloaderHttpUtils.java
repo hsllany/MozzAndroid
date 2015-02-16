@@ -18,7 +18,7 @@ public class DownloaderHttpUtils extends HttpUtils {
 			mUrl = url;
 			if (!path.endsWith(File.separator))
 				path = path + File.separator;
-			mPath = path;
+			mPath = path + fileName;
 
 			buffer = new byte[8 * 1024];
 
@@ -102,5 +102,12 @@ public class DownloaderHttpUtils extends HttpUtils {
 	public void download(String url, HttpDownloadListener l, String path,
 			String fileName) {
 		httpExecutor.execute(new HttpDownloaderTast(url, l, path, fileName));
+	}
+
+	public String download(String url, HttpDownloadListener l, String pathOnly) {
+		String fileName = "MozzFiles_" + System.currentTimeMillis() + ".mozz";
+		httpExecutor
+				.execute(new HttpDownloaderTast(url, l, pathOnly, fileName));
+		return fileName;
 	}
 }

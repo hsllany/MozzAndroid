@@ -5,14 +5,14 @@ import java.lang.reflect.Field;
 public abstract class Model {
 	private String DEBUG_TAG = this.getClass().getSimpleName();
 
-	int _id = -1;
+	int id = -1;
 
 	public int id() {
-		return this._id;
+		return this.id;
 	}
 
 	public boolean hasSetId() {
-		if (this._id >= 0)
+		if (this.id >= 0)
 			return true;
 		return false;
 	}
@@ -83,7 +83,7 @@ public abstract class Model {
 
 	public String toJson() {
 		StringBuilder jsonBuilder = new StringBuilder();
-		jsonBuilder.append("{\"id\": " + this._id + "");
+		jsonBuilder.append("{\"id\": " + this.id + "");
 		String[] allFields = allOtherFields();
 
 		for (int i = 0; i < allFields.length; i++) {

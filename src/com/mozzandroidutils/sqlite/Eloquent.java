@@ -21,7 +21,7 @@ public abstract class Eloquent<T extends Model> {
 
 	private String DEBUG_TAG = this.getClass().getSimpleName();
 
-	private final static String ID_COLUMN = "_id";
+	private final static String ID_COLUMN = "id";
 
 	/**
 	 * Ë³Ðò
@@ -80,14 +80,7 @@ public abstract class Eloquent<T extends Model> {
 	}
 
 	public Cursor all() {
-		if (mTableExist) {
-			debug("SELECT * FROM " + mTableName);
-			Cursor cursor = mDatabase.rawQuery("SELECT * FROM " + mTableName,
-					null);
-			return cursor;
-		} else {
-			return null;
-		}
+		return all(ORDER.ASC);
 	}
 
 	public Cursor all(ORDER order) {
@@ -111,12 +104,20 @@ public abstract class Eloquent<T extends Model> {
 		}
 	}
 
+	/**
+	 * if you want to do the following query:
+	 * "SELECT * FROM¡¡students WHERE grade = 3"; you should invoke
+	 * where("grade = 3");
+	 * 
+	 * @param whereSQL
+	 * @return
+	 */
 	public Cursor where(String whereSQL) {
 
 		if (!mTableExist)
 			return null;
 
-		String selectSQL = "SELECT * FROM " + mTableName + " " + whereSQL;
+		String selectSQL = "SELECT * FROM " + mTableName + " WHERE " + whereSQL;
 		debug(selectSQL);
 
 		return mDatabase.rawQuery(whereSQL, null);
@@ -131,7 +132,7 @@ public abstract class Eloquent<T extends Model> {
 		for (int i = 0; i < keys.length; i++) {
 			sb.append(" " + keys[i] + " = '" + values[i] + "' ");
 			if (i < keys.length - 1)
-				sb.append("&");
+				sb.append("AND");
 		}
 
 		String selectSQL = "SELECT * FROM " + mTableName + " WHERE "
@@ -140,7 +141,8 @@ public abstract class Eloquent<T extends Model> {
 		return mDatabase.rawQuery(selectSQL, null);
 	}
 
-	public T Find(int id, T t) {
+	public T find(int id, T t) {
+
 		if (mTableExist) {
 			debug("SELECT * FROM " + mTableName + " WHERE " + ID_COLUMN + " = "
 					+ id);
@@ -183,7 +185,7 @@ public abstract class Eloquent<T extends Model> {
 					}
 				}
 			}
-
+			t.id = id;
 			return t;
 		} else {
 			return null;
@@ -328,7 +330,7 @@ public abstract class Eloquent<T extends Model> {
 				}
 
 				String upgrateSQL = "UPDATE " + mTableName + " SET "
-						+ sb.toString() + " WHERE " + ID_COLUMN + " = " + t._id;
+						+ sb.toString() + " WHERE " + ID_COLUMN + " = " + t.id;
 				debug(upgrateSQL);
 				synchronized (mDatabase) {
 					mDatabase.execSQL(upgrateSQL);
@@ -372,7 +374,7 @@ public abstract class Eloquent<T extends Model> {
 	public boolean delete(T t) {
 		if (t.hasSetId() && mTableExist && !mReadOnly) {
 			String deleteSQL = "DELETE FROM table " + mTableName + " WHERE "
-					+ ID_COLUMN + " = " + t._id;
+					+ ID_COLUMN + " = " + t.id;
 			debug(deleteSQL);
 
 			synchronized (mDatabase) {
@@ -419,7 +421,7 @@ public abstract class Eloquent<T extends Model> {
 			mOpenDebug = false;
 	}
 
-	public static Map<String, ColumnType> createSQLParser(String createSQL) {
+	private static Map<String, ColumnType> createSQLParser(String createSQL) {
 		createSQL = createSQL.substring(createSQL.indexOf('(') + 1,
 				createSQL.length() - 1);
 
@@ -427,10 +429,14 @@ public abstract class Eloquent<T extends Model> {
 		HashMap<String, ColumnType> columnTypes = new HashMap<String, ColumnType>();
 		for (int i = 0; i < parts.length; i++) {
 			String[] singleColumn = parts[i].split(" ");
-			String keys = singleColumn[0];
+			int j = 0;
+			while (singleColumn[j].equals(" ") || singleColumn[j].equals("")) {
+				j++;
+			}
+			String keys = singleColumn[j];
 
-			int otherChar = singleColumn[1].indexOf('(');
-			String typeString = singleColumn[1].toLowerCase();
+			int otherChar = singleColumn[j + 1].indexOf('(');
+			String typeString = singleColumn[j + 1].toLowerCase();
 
 			ColumnType type = null;
 

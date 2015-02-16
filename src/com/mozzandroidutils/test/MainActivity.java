@@ -23,7 +23,7 @@ public class MainActivity extends Activity implements OnClickListener {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		MozzConfig.makeAppDirs(this);
-		testUpgrader();
+		testEloquentCreate();
 
 	}
 
@@ -34,6 +34,21 @@ public class MainActivity extends Activity implements OnClickListener {
 	}
 
 	public void onDestory() {
+
+	}
+
+	private void testEloquentCreate() {
+		String[] columnNames = { "name", "gender", "age", "extra" };
+		ColumnType[] columnTypes = { ColumnType.TYPE_TEXT,
+				ColumnType.TYPE_TEXT, ColumnType.TYPE_INTEGER,
+				ColumnType.TYPE_BLOB };
+		Eloquent.create("students", columnNames, columnTypes, this);
+
+		StudentsEloquent studentTable = new StudentsEloquent(this);
+
+		Student student = studentTable.find(7, new Student());
+
+		System.out.println(student.extra);
 
 	}
 
@@ -100,70 +115,25 @@ public class MainActivity extends Activity implements OnClickListener {
 		}
 
 	}
-
-	private void testDB() {
-		Eloquent.create("test", new String[] { "name" },
-				new ColumnType[] { ColumnType.TYPE_TEXT }, this);
-
-		final TestEloquent testTable = new TestEloquent(this);
-
-		new Thread() {
-			public void run() {
-				for (int i = 0; i < 100; i++) {
-					TestModel newModel = new TestModel();
-					newModel.setName(System.currentTimeMillis() + "_" + 1);
-					testTable.save(newModel);
-				}
-			};
-		}.start();
-
-		new Thread() {
-			public void run() {
-				for (int i = 0; i < 100; i++) {
-					TestModel newModel = new TestModel();
-					newModel.setName(System.currentTimeMillis() + "_" + 2);
-					testTable.save(newModel);
-				}
-			};
-		}.start();
-
-		new Thread() {
-			public void run() {
-				for (int i = 0; i < 100; i++) {
-					TestModel newModel = new TestModel();
-					newModel.setName(System.currentTimeMillis() + "_" + 3);
-					testTable.save(newModel);
-				}
-			};
-		}.start();
-
-		new Thread() {
-			public void run() {
-				for (int i = 0; i < 100; i++) {
-					TestModel newModel = new TestModel();
-					newModel.setName(System.currentTimeMillis() + "_" + 4);
-					testTable.save(newModel);
-				}
-
-			};
-		}.start();
-
-		testTable.close();
-	}
-
 }
 
-class TestModel extends Model {
-	private String name;
+class Student extends Model {
+	public String name = "zhangdao";
+
+	public String gender = "male";
+
+	public int age = 13;
+
+	public String extra = "hello world";
 
 	public void setName(String nm) {
 		this.name = nm;
 	}
 }
 
-class TestEloquent extends Eloquent<TestModel> {
+class StudentsEloquent extends Eloquent<Student> {
 
-	public TestEloquent(Context context) {
+	public StudentsEloquent(Context context) {
 		super(context);
 	}
 
