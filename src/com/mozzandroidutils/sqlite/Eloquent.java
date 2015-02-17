@@ -82,11 +82,11 @@ public abstract class Eloquent {
 		return true;
 	}
 
-	public Cursor all() {
+	public Collector all() {
 		return all(ORDER.ASC);
 	}
 
-	public Cursor all(ORDER order) {
+	public Collector all(ORDER order) {
 		if (mTableExist) {
 			if (order == ORDER.DESC) {
 				debug("SELECT * FROM " + mTableName + " ORDER BY " + ID_COLUMN
@@ -94,12 +94,12 @@ public abstract class Eloquent {
 				Cursor cursor = mDatabase
 						.rawQuery("SELECT * FROM " + mTableName + " ORDER BY "
 								+ ID_COLUMN + " DESC", null);
-				return cursor;
+				return new Collector(cursor, mColumn);
 			} else {
 				debug("SELECT * FROM " + mTableName + "ORDER BY " + ID_COLUMN);
 				Cursor cursor = mDatabase.rawQuery("SELECT * FROM "
 						+ mTableName + "ORDER BY " + ID_COLUMN, null);
-				return cursor;
+				return new Collector(cursor, mColumn);
 			}
 		} else {
 
@@ -115,7 +115,7 @@ public abstract class Eloquent {
 	 * @param whereSQL
 	 * @return
 	 */
-	public Cursor where(String whereSQL) {
+	public Collector where(String whereSQL) {
 
 		if (!mTableExist)
 			return null;
@@ -123,10 +123,10 @@ public abstract class Eloquent {
 		String selectSQL = "SELECT * FROM " + mTableName + " WHERE " + whereSQL;
 		debug(selectSQL);
 
-		return mDatabase.rawQuery(whereSQL, null);
+		return new Collector(mDatabase.rawQuery(selectSQL, null), mColumn);
 	}
 
-	public Cursor where(String[] keys, Object[] values) {
+	public Collector where(String[] keys, Object[] values) {
 
 		if (keys.length != values.length || !mTableExist)
 			return null;
@@ -141,7 +141,7 @@ public abstract class Eloquent {
 		String selectSQL = "SELECT * FROM " + mTableName + " WHERE "
 				+ sb.toString();
 		debug(selectSQL);
-		return mDatabase.rawQuery(selectSQL, null);
+		return new Collector(mDatabase.rawQuery(selectSQL, null), mColumn);
 	}
 
 	public Model find(int id) {

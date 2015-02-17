@@ -98,7 +98,13 @@ Cursor cursor = students.all();
 
 ###带Where的查找###
 ```java
-Cursor cursor = studentTable.where(new String[]{'name'},new String[]{'zhangdao'});
+//获取所有数据
+List<Model> result = studentTable
+						.where(new String[]{'name'},new String[]{'zhangdao'})
+						.get();
+
+//获取单条数据
+Model model = studentTable.where("grade = 3").first();
 ```
 
 ###查找id,并更新###

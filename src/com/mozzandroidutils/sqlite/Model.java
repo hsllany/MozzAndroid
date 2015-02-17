@@ -11,8 +11,6 @@ public class Model {
 		mField = new HashMap<String, Object>();
 	}
 
-	int id = -1;
-
 	public int id() {
 		return this.id;
 	}
@@ -23,7 +21,14 @@ public class Model {
 		return false;
 	}
 
-	public void set(String fieldName, Object obj) {
+	public void set(String fieldName, Object obj)
+			throws IllegalArgumentException {
+		if (fieldName.equalsIgnoreCase("id"))
+			if (obj instanceof Integer)
+				id = (Integer) obj;
+			else
+				throw new IllegalArgumentException("id must be integer");
+
 		mField.put(fieldName, obj);
 	}
 
@@ -74,4 +79,5 @@ public class Model {
 
 	private HashMap<String, Object> mField;
 	String mTable = null;
+	int id = -1;
 }
