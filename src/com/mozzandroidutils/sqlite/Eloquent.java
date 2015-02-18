@@ -87,20 +87,18 @@ public abstract class Eloquent {
 	}
 
 	public Collector all(ORDER order) {
+		// TODO
 		if (mTableExist) {
 			if (order == ORDER.DESC) {
 				debug("SELECT * FROM " + mTableName + " ORDER BY " + ID_COLUMN
 						+ " DESC");
-				Cursor cursor = mDatabase
-						.rawQuery("SELECT * FROM " + mTableName + " ORDER BY "
-								+ ID_COLUMN + " DESC", null);
-				return new Collector(cursor, mColumn);
+				mCollector.buildSelect("*");
 			} else {
 				debug("SELECT * FROM " + mTableName + "ORDER BY " + ID_COLUMN);
-				Cursor cursor = mDatabase.rawQuery("SELECT * FROM "
-						+ mTableName + "ORDER BY " + ID_COLUMN, null);
-				return new Collector(cursor, mColumn);
+				mCollector.buildSelect("*");
 			}
+
+			return mCollector;
 		} else {
 
 			return null;
@@ -120,10 +118,8 @@ public abstract class Eloquent {
 		if (!mTableExist)
 			return null;
 
-		String selectSQL = "SELECT * FROM " + mTableName + " WHERE " + whereSQL;
-		debug(selectSQL);
-
-		return new Collector(mDatabase.rawQuery(selectSQL, null), mColumn);
+		mCollector.buildWhere(whereSQL);
+		return mCollector;
 	}
 
 	public Collector where(String[] keys, Object[] values) {
@@ -138,10 +134,8 @@ public abstract class Eloquent {
 				sb.append("AND");
 		}
 
-		String selectSQL = "SELECT * FROM " + mTableName + " WHERE "
-				+ sb.toString();
-		debug(selectSQL);
-		return new Collector(mDatabase.rawQuery(selectSQL, null), mColumn);
+		mCollector.buildWhere(sb.toString());
+		return mCollector;
 	}
 
 	public Model find(int id) {
@@ -213,6 +207,8 @@ public abstract class Eloquent {
 		}
 
 		checkTableExistAndColumn();
+
+		mCollector = new Collector(mTableName, mDatabase, mColumn);
 	}
 
 	Eloquent(Context context, boolean readOnly) {
@@ -230,18 +226,24 @@ public abstract class Eloquent {
 		}
 
 		checkTableExistAndColumn();
+
+		mCollector = new Collector(mTableName, mDatabase, mColumn);
 	}
 
 	public Eloquent(Context context, String tableName) {
 		this(context);
 
 		mTableName = tableName.toLowerCase();
+
+		mCollector.changeTableName(mTableName);
 	}
 
 	Eloquent(Context context, String tableName, boolean readOnly) {
 		this(context, readOnly);
 
 		mTableName = tableName.toLowerCase();
+
+		mCollector.changeTableName(mTableName);
 	}
 
 	public boolean save(Model t) {
@@ -491,6 +493,8 @@ public abstract class Eloquent {
 
 	protected String mTableName = null;
 	private SQLiteDatabase mDatabase;
+
+	private Collector mCollector;
 
 	private Map<String, ColumnType> mColumn = new HashMap<String, ColumnType>();
 	private boolean mTableExist = false;

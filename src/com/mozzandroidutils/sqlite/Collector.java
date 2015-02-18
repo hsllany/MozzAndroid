@@ -7,41 +7,96 @@ import java.util.Map;
 import com.mozzandroidutils.file.ObjectByte;
 
 import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 
 public class Collector {
-	Collector(Cursor cursor, Map<String, ColumnType> columnTypes) {
-		mCursor = cursor;
+	Collector(String tableName, SQLiteDatabase sqliteDatabase,
+			Map<String, ColumnType> columnTypes) {
 		mColumns = columnTypes;
+		mTableName = tableName;
+		mDatabase = sqliteDatabase;
+	}
+
+	void closeBuild() {
+		mCanBuildQuery = false;
+	}
+
+	void changeTableName(String newTableName) {
+		mTableName = newTableName;
+	}
+
+	void buildSelect(String select) {
+		if (mCanBuildQuery) {
+			mSelect = select;
+			mIsQueryCosumed = false;
+		}
+	}
+
+	void buildWhere(String where) {
+		if (mCanBuildQuery) {
+			mWhereBuilder.append(where);
+			mIsQueryCosumed = false;
+		}
+	}
+
+	private void clear() {
+		mSelect = null;
+		mWhereBuilder.delete(0, mWhereBuilder.length());
+		mIsQueryCosumed = true;
+		mCanBuildQuery = true;
+	}
+
+	private Cursor build() {
+		if (!mIsQueryCosumed) {
+			String query = null;
+			if (mSelect != null) {
+				query += mSelect + " FROM " + mTableName;
+			} else {
+				query += "SELECT * " + " FROM " + mTableName;
+			}
+
+			if (mWhereBuilder.length() > 0) {
+				query += " WHERE " + mWhereBuilder.toString();
+			}
+
+			if (mDatabase != null && mDatabase.isOpen()) {
+				return mDatabase.rawQuery(query, null);
+			}
+			clear();
+		}
+		return null;
 	}
 
 	public List<Model> get() throws IllegalAccessException {
-		if (mCursor == null)
+		Cursor cursor = build();
+
+		if (cursor == null)
 			throw new IllegalAccessException(
 					"result has been cosumed, please do a query again.");
 
 		List<Model> result = new ArrayList<Model>();
-		if (mCursor.moveToFirst()) {
-			while (mCursor.moveToNext()) {
+		if (cursor.moveToFirst()) {
+			while (cursor.moveToNext()) {
 				Model model = new Model();
-				int length = mCursor.getColumnCount();
+				int length = cursor.getColumnCount();
 
 				for (int i = 0; i < length; i++) {
-					String columnName = mCursor.getColumnName(i);
+					String columnName = cursor.getColumnName(i);
 
 					ColumnType type = mColumns.get(columnName);
 					switch (type) {
 					case TYPE_INTEGER:
-						model.set(columnName, mCursor.getInt(i));
+						model.set(columnName, cursor.getInt(i));
 						break;
 					case TYPE_BLOB:
 						model.set(columnName,
-								ObjectByte.toObject(mCursor.getBlob(i)));
+								ObjectByte.toObject(cursor.getBlob(i)));
 						break;
 					case TYPE_TEXT:
-						model.set(columnName, mCursor.getString(i));
+						model.set(columnName, cursor.getString(i));
 						break;
 					case TYPE_REAL:
-						model.set(columnName, mCursor.getDouble(i));
+						model.set(columnName, cursor.getDouble(i));
 						break;
 					}
 
@@ -50,55 +105,64 @@ public class Collector {
 			}
 		}
 
-		close();
+		close(cursor);
 
 		return result;
 	}
 
 	public Model first() throws IllegalAccessException {
-		if (mCursor == null)
+		Cursor cursor = build();
+
+		if (cursor == null)
 			throw new IllegalAccessException(
 					"result has been cosumed, please do a query again.");
 
-		if (mCursor.moveToFirst()) {
+		if (cursor.moveToFirst()) {
 			Model model = new Model();
-			int length = mCursor.getColumnCount();
+			int length = cursor.getColumnCount();
 
 			for (int i = 0; i < length; i++) {
-				String columnName = mCursor.getColumnName(i);
+				String columnName = cursor.getColumnName(i);
 
 				ColumnType type = mColumns.get(columnName);
 				switch (type) {
 				case TYPE_INTEGER:
-					model.set(columnName, mCursor.getInt(i));
+					model.set(columnName, cursor.getInt(i));
 					break;
 				case TYPE_BLOB:
 					model.set(columnName,
-							ObjectByte.toObject(mCursor.getBlob(i)));
+							ObjectByte.toObject(cursor.getBlob(i)));
 					break;
 				case TYPE_TEXT:
-					model.set(columnName, mCursor.getString(i));
+					model.set(columnName, cursor.getString(i));
 					break;
 				case TYPE_REAL:
-					model.set(columnName, mCursor.getDouble(i));
+					model.set(columnName, cursor.getDouble(i));
 					break;
 				}
 			}
-			close();
+			close(cursor);
 			return model;
 		} else {
-			close();
+			close(cursor);
 			return null;
 		}
 
 	}
 
-	private void close() {
-		if (mCursor != null)
-			mCursor.close();
-		mCursor = null;
+	private void close(Cursor cursor) {
+		if (cursor != null)
+			cursor.close();
+		cursor = null;
 	}
 
-	private Cursor mCursor;
 	private Map<String, ColumnType> mColumns;
+
+	private String mSelect;
+	private String mTableName;
+	private StringBuilder mWhereBuilder;
+	private SQLiteDatabase mDatabase;
+
+	private boolean mIsQueryCosumed = true;
+	private boolean mCanBuildQuery = true;
 }
