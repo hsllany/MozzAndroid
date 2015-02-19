@@ -93,7 +93,7 @@ class StudentsEloquent extends Eloquent<Student>{
 ###查询所有：###
 ```java
 StudentsEloquent studentTable = new StudentsEloquent();
-Cursor cursor = students.all();
+List<Model> studentsResult = students.all().get();
 ```
 
 ###带Where的查找###
@@ -105,7 +105,11 @@ List<Model> result = studentTable
 
 //获取单条数据
 Model model = studentTable.where("grade = 3").first();
+
+//获取Cursor
+Cursor cursor = studentTable.where("grade = 3").cursor();
 ```
+
 
 ###查找id,并更新###
 ```java

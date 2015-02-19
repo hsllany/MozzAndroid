@@ -2,6 +2,7 @@ package com.mozzandroidutils.sqlite;
 
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
@@ -82,27 +83,21 @@ public abstract class Eloquent {
 		return true;
 	}
 
-	public Collector all() {
-		return all(ORDER.ASC);
+	public Eloquent all() {
+		if (mTableExist) {
+			debug("SELECT * FROM " + mTableName);
+			mCollector.buildSelect("*");
+		} else {
+			debug("SELECT * FROM " + mTableName + "ORDER BY " + ID_COLUMN);
+			mCollector.buildSelect("*");
+		}
+
+		return this;
 	}
 
-	public Collector all(ORDER order) {
-		// TODO
-		if (mTableExist) {
-			if (order == ORDER.DESC) {
-				debug("SELECT * FROM " + mTableName + " ORDER BY " + ID_COLUMN
-						+ " DESC");
-				mCollector.buildSelect("*");
-			} else {
-				debug("SELECT * FROM " + mTableName + "ORDER BY " + ID_COLUMN);
-				mCollector.buildSelect("*");
-			}
-
-			return mCollector;
-		} else {
-
-			return null;
-		}
+	public Eloquent select(String selectSQL) {
+		mCollector.buildSelect(selectSQL);
+		return this;
 	}
 
 	/**
@@ -111,18 +106,14 @@ public abstract class Eloquent {
 	 * where("grade = 3");
 	 * 
 	 * @param whereSQL
-	 * @return
+	 * @return this
 	 */
-	public Collector where(String whereSQL) {
-
-		if (!mTableExist)
-			return null;
-
+	public Eloquent where(String whereSQL) {
 		mCollector.buildWhere(whereSQL);
-		return mCollector;
+		return this;
 	}
 
-	public Collector where(String[] keys, Object[] values) {
+	public Eloquent where(String[] keys, Object[] values) {
 
 		if (keys.length != values.length || !mTableExist)
 			return null;
@@ -135,15 +126,31 @@ public abstract class Eloquent {
 		}
 
 		mCollector.buildWhere(sb.toString());
-		return mCollector;
+		return this;
+	}
+
+	public List<Model> get() {
+		try {
+			return mCollector.get();
+		} catch (IllegalAccessException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	public Model first() {
+		try {
+			return mCollector.first();
+		} catch (IllegalAccessException e) {
+			e.printStackTrace();
+			return null;
+		}
 	}
 
 	public Model find(int id) {
 
 		if (mTableExist) {
 
-			debug("SELECT * FROM " + mTableName + " WHERE " + ID_COLUMN + " = "
-					+ id);
 			Cursor cursor = mDatabase.rawQuery("SELECT * FROM " + mTableName
 					+ " WHERE " + ID_COLUMN + " = " + id, null);
 
@@ -254,8 +261,6 @@ public abstract class Eloquent {
 			boolean insertMode = true;
 			if (t.hasSetId()) {
 				Cursor cursor = null;
-				debug("SELECT * FROM " + mTableName + " WHERE " + ID_COLUMN
-						+ " = " + t.id());
 				synchronized (mDatabase) {
 					cursor = mDatabase.rawQuery("SELECT * FROM " + mTableName
 							+ " WHERE " + ID_COLUMN + " = " + t.id(), null);
@@ -308,7 +313,6 @@ public abstract class Eloquent {
 				}
 
 				String sqlInsert = sb.toString() + valueSb.toString() + ")";
-				debug(sqlInsert);
 				synchronized (mDatabase) {
 					mDatabase.execSQL(sqlInsert);
 				}
@@ -351,7 +355,6 @@ public abstract class Eloquent {
 
 				String upgrateSQL = "UPDATE " + mTableName + " SET "
 						+ sb.toString() + " WHERE " + ID_COLUMN + " = " + t.id;
-				debug(upgrateSQL);
 				synchronized (mDatabase) {
 					mDatabase.execSQL(upgrateSQL);
 				}
@@ -361,6 +364,31 @@ public abstract class Eloquent {
 
 		} else {
 			return false;
+		}
+	}
+
+	public boolean delete(Model t) {
+		if (t.hasSetId() && mTableExist && !mReadOnly) {
+			String deleteSQL = "DELETE FROM table " + mTableName + " WHERE "
+					+ ID_COLUMN + " = " + t.id;
+
+			synchronized (mDatabase) {
+				mDatabase.execSQL(deleteSQL);
+			}
+
+			return true;
+		}
+		return false;
+	}
+
+	public void drop() {
+		if (mTableExist && !mReadOnly) {
+			String dropSQL = "DROP TABLE " + mTableName;
+			synchronized (mDatabase) {
+				mDatabase.execSQL(dropSQL);
+			}
+
+			mTableExist = false;
 		}
 	}
 
@@ -395,33 +423,6 @@ public abstract class Eloquent {
 
 	}
 
-	public boolean delete(Model t) {
-		if (t.hasSetId() && mTableExist && !mReadOnly) {
-			String deleteSQL = "DELETE FROM table " + mTableName + " WHERE "
-					+ ID_COLUMN + " = " + t.id;
-			debug(deleteSQL);
-
-			synchronized (mDatabase) {
-				mDatabase.execSQL(deleteSQL);
-			}
-
-			return true;
-		}
-		return false;
-	}
-
-	public void drop() {
-		if (mTableExist && !mReadOnly) {
-			String dropSQL = "DROP TABLE " + mTableName;
-			debug(dropSQL);
-			synchronized (mDatabase) {
-				mDatabase.execSQL(dropSQL);
-			}
-
-			mTableExist = false;
-		}
-	}
-
 	/**
 	 * should be positioned in the onDestory() of Activity, Service, or
 	 * Appliction
@@ -438,11 +439,8 @@ public abstract class Eloquent {
 		}
 	}
 
-	public void setDebug(boolean open) {
-		if (open)
-			mOpenDebug = true;
-		else
-			mOpenDebug = false;
+	public void setDebug(boolean openDebug) {
+		mCollector.setDebugMode(openDebug);
 	}
 
 	private static Map<String, ColumnType> createSQLParser(String createSQL) {
@@ -486,11 +484,6 @@ public abstract class Eloquent {
 		return columnTypes;
 	}
 
-	private void debug(String debugInfo) {
-		if (mOpenDebug)
-			Log.d(DEBUG_TAG, debugInfo);
-	}
-
 	protected String mTableName = null;
 	private SQLiteDatabase mDatabase;
 
@@ -499,6 +492,5 @@ public abstract class Eloquent {
 	private Map<String, ColumnType> mColumn = new HashMap<String, ColumnType>();
 	private boolean mTableExist = false;
 	private boolean mReadOnly = false;
-	private boolean mOpenDebug = true;
 
 }

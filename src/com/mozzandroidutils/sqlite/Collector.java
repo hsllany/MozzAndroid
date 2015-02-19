@@ -8,8 +8,11 @@ import com.mozzandroidutils.file.ObjectByte;
 
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
 
 public class Collector {
+	private final String DEBUG_TAG = this.getClass().getSimpleName();
+
 	Collector(String tableName, SQLiteDatabase sqliteDatabase,
 			Map<String, ColumnType> columnTypes) {
 		mColumns = columnTypes;
@@ -42,39 +45,17 @@ public class Collector {
 	private void clear() {
 		mSelect = null;
 		mWhereBuilder.delete(0, mWhereBuilder.length());
-		mIsQueryCosumed = true;
-		mCanBuildQuery = true;
-	}
 
-	private Cursor build() {
-		if (!mIsQueryCosumed) {
-			String query = null;
-			if (mSelect != null) {
-				query += mSelect + " FROM " + mTableName;
-			} else {
-				query += "SELECT * " + " FROM " + mTableName;
-			}
-
-			if (mWhereBuilder.length() > 0) {
-				query += " WHERE " + mWhereBuilder.toString();
-			}
-
-			if (mDatabase != null && mDatabase.isOpen()) {
-				return mDatabase.rawQuery(query, null);
-			}
-			clear();
-		}
-		return null;
 	}
 
 	public List<Model> get() throws IllegalAccessException {
 		Cursor cursor = build();
-
-		if (cursor == null)
+		List<Model> result = new ArrayList<Model>();
+		if (cursor == null) {
 			throw new IllegalAccessException(
 					"result has been cosumed, please do a query again.");
+		}
 
-		List<Model> result = new ArrayList<Model>();
 		if (cursor.moveToFirst()) {
 			while (cursor.moveToNext()) {
 				Model model = new Model();
@@ -110,12 +91,23 @@ public class Collector {
 		return result;
 	}
 
-	public Model first() throws IllegalAccessException {
+	public Cursor cursor() throws IllegalAccessException {
 		Cursor cursor = build();
 
 		if (cursor == null)
 			throw new IllegalAccessException(
 					"result has been cosumed, please do a query again.");
+
+		return cursor;
+	}
+
+	public Model first() throws IllegalAccessException {
+		Cursor cursor = build();
+
+		if (cursor == null) {
+			throw new IllegalAccessException(
+					"result has been cosumed, please do a query again.");
+		}
 
 		if (cursor.moveToFirst()) {
 			Model model = new Model();
@@ -150,10 +142,44 @@ public class Collector {
 
 	}
 
+	private Cursor build() {
+		if (!mIsQueryCosumed) {
+			String query = null;
+			if (mSelect != null) {
+				query += "SELECT " + mSelect + " FROM " + mTableName;
+			} else {
+				query += "SELECT * " + " FROM " + mTableName;
+			}
+
+			if (mWhereBuilder.length() > 0) {
+				query += " WHERE " + mWhereBuilder.toString();
+			}
+
+			if (mDatabase != null && mDatabase.isOpen()) {
+				debug(query);
+				return mDatabase.rawQuery(query, null);
+			}
+			clear();
+
+			mIsQueryCosumed = true;
+			mCanBuildQuery = true;
+		}
+		return null;
+	}
+
 	private void close(Cursor cursor) {
 		if (cursor != null)
 			cursor.close();
 		cursor = null;
+	}
+
+	private void debug(String debugInfo) {
+		if (mOpenDebug)
+			Log.d(DEBUG_TAG, debugInfo);
+	}
+
+	void setDebugMode(boolean openDebug) {
+		mOpenDebug = openDebug;
 	}
 
 	private Map<String, ColumnType> mColumns;
@@ -165,4 +191,6 @@ public class Collector {
 
 	private boolean mIsQueryCosumed = true;
 	private boolean mCanBuildQuery = true;
+
+	private boolean mOpenDebug = false;
 }
