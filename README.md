@@ -84,7 +84,7 @@ DB用法
 首先，继承Eloquent（代表数据库中的表）, 类名的规则是：表名 + Eloquent。注意命名应和数据库中表明对应。
 
 ```java
-class StudentsEloquent extends Eloquent<Student>{
+class StudentsEloquent extends Eloquent{
 
 }
 ```
