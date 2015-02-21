@@ -18,6 +18,8 @@ public class Collector {
 		mColumns = columnTypes;
 		mTableName = tableName;
 		mDatabase = sqliteDatabase;
+
+		mWhereBuilder = new StringBuilder();
 	}
 
 	void closeBuild() {
@@ -44,7 +46,7 @@ public class Collector {
 
 	private void clear() {
 		mSelect = null;
-		mWhereBuilder.delete(0, mWhereBuilder.length());
+		mWhereBuilder.setLength(0);
 
 	}
 
@@ -144,23 +146,32 @@ public class Collector {
 
 	private Cursor build() {
 		if (!mIsQueryCosumed) {
-			String query = null;
-			if (mSelect != null) {
-				query += "SELECT " + mSelect + " FROM " + mTableName;
+			if (mQueryBuilder == null) {
+				mQueryBuilder = new StringBuilder();
 			} else {
-				query += "SELECT * " + " FROM " + mTableName;
+				mQueryBuilder.setLength(0);
+			}
+
+			if (mSelect != null) {
+				mQueryBuilder.append("SELECT " + mSelect + " FROM "
+						+ mTableName);
+			} else {
+				mQueryBuilder.append("SELECT * " + " FROM " + mTableName);
 			}
 
 			if (mWhereBuilder.length() > 0) {
-				query += " WHERE " + mWhereBuilder.toString();
+				mQueryBuilder.append(" WHERE " + mWhereBuilder.toString());
 			}
 
 			if (mDatabase != null && mDatabase.isOpen()) {
-				debug(query);
-				return mDatabase.rawQuery(query, null);
+				debug(mQueryBuilder.toString());
+				clear();
+				mIsQueryCosumed = true;
+				mCanBuildQuery = true;
+				return mDatabase.rawQuery(mQueryBuilder.toString(), null);
 			}
-			clear();
 
+			clear();
 			mIsQueryCosumed = true;
 			mCanBuildQuery = true;
 		}
@@ -187,6 +198,7 @@ public class Collector {
 	private String mSelect;
 	private String mTableName;
 	private StringBuilder mWhereBuilder;
+	private StringBuilder mQueryBuilder;
 	private SQLiteDatabase mDatabase;
 
 	private boolean mIsQueryCosumed = true;

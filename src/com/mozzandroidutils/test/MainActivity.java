@@ -1,6 +1,6 @@
 package com.mozzandroidutils.test;
 
-import java.util.HashMap;
+import java.util.List;
 
 import android.app.Activity;
 import android.content.Context;
@@ -25,14 +25,8 @@ public class MainActivity extends Activity implements OnClickListener {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		MozzConfig.makeAppDirs(this);
-		HashMap<String, Object> testHash = new HashMap<String, Object>();
-
-		testHash.put("hello world", new Integer(3));
-
-		String a = "hello world";
-		a.hashCode();
-		testHash.get(a);
-
+		testEloquentCreate();
+		testDB();
 	}
 
 	@Override
@@ -45,19 +39,23 @@ public class MainActivity extends Activity implements OnClickListener {
 
 	}
 
+	private void testDB() {
+		StudentsEloquent studentsTable = new StudentsEloquent(this);
+		studentsTable.setDebug(true);
+
+		List<Model> result = studentsTable.where("id > 30").get();
+
+		result = studentsTable.select("name").where("id > 66").get();
+
+		System.out.println(result.toString());
+	}
+
 	private void testEloquentCreate() {
 		String[] columnNames = { "name", "gender", "age", "extra" };
 		ColumnType[] columnTypes = { ColumnType.TYPE_TEXT,
 				ColumnType.TYPE_TEXT, ColumnType.TYPE_INTEGER,
 				ColumnType.TYPE_BLOB };
 		Eloquent.create("students", columnNames, columnTypes, this);
-
-		StudentsEloquent studentTable = new StudentsEloquent(this);
-
-		Model student = studentTable.find(7);
-
-		System.out.println(student.get("extra"));
-
 	}
 
 	private void testUpgrader() {

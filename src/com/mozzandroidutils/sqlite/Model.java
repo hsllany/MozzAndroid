@@ -23,13 +23,14 @@ public class Model {
 
 	public void set(String fieldName, Object obj)
 			throws IllegalArgumentException {
-		if (fieldName.equalsIgnoreCase("id"))
+		if (fieldName.equalsIgnoreCase("id")) {
 			if (obj instanceof Integer)
 				id = (Integer) obj;
 			else
 				throw new IllegalArgumentException("id must be integer");
-
-		mField.put(fieldName, obj);
+		} else {
+			mField.put(fieldName, obj);
+		}
 	}
 
 	public Object get(String fieldName) {

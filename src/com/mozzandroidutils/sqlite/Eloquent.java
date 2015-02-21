@@ -4,15 +4,15 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
-
-import com.mozzandroidutils.file.ObjectByte;
+import java.util.Set;
 
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
+
+import com.mozzandroidutils.file.ObjectByte;
 
 /**
  * 代表数据库中的表
@@ -85,10 +85,6 @@ public abstract class Eloquent {
 
 	public Eloquent all() {
 		if (mTableExist) {
-			debug("SELECT * FROM " + mTableName);
-			mCollector.buildSelect("*");
-		} else {
-			debug("SELECT * FROM " + mTableName + "ORDER BY " + ID_COLUMN);
 			mCollector.buildSelect("*");
 		}
 
@@ -131,7 +127,10 @@ public abstract class Eloquent {
 
 	public List<Model> get() {
 		try {
-			return mCollector.get();
+			if (mTableExist)
+				return mCollector.get();
+			else
+				return null;
 		} catch (IllegalAccessException e) {
 			e.printStackTrace();
 			return null;
@@ -140,11 +139,19 @@ public abstract class Eloquent {
 
 	public Model first() {
 		try {
-			return mCollector.first();
+			if (mTableExist)
+				return mCollector.first();
+			else
+				return null;
 		} catch (IllegalAccessException e) {
 			e.printStackTrace();
 			return null;
 		}
+	}
+
+	public void deleteAll() {
+		if (mTableExist)
+			mDatabase.execSQL("delete from " + mTableName);
 	}
 
 	public Model find(int id) {
@@ -253,17 +260,29 @@ public abstract class Eloquent {
 		mCollector.changeTableName(mTableName);
 	}
 
-	public boolean save(Model t) {
-		if (mReadOnly)
-			return false;
+	// TODO
+	public boolean saveAll(List<Model> modelList) {
+		// SQLiteStatement insertStatement = mDatabase.compileStatement(sql);
+
+		// if (mTableExist) {
+		// if (mReadOnly)
+		// return false;
+		// }
+		return false;
+	}
+
+	public boolean save(Model model) {
 
 		if (mTableExist) {
+			if (mReadOnly)
+				return false;
+
 			boolean insertMode = true;
-			if (t.hasSetId()) {
+			if (model.hasSetId()) {
 				Cursor cursor = null;
 				synchronized (mDatabase) {
 					cursor = mDatabase.rawQuery("SELECT * FROM " + mTableName
-							+ " WHERE " + ID_COLUMN + " = " + t.id(), null);
+							+ " WHERE " + ID_COLUMN + " = " + model.id(), null);
 				}
 
 				if (cursor.moveToFirst()) {
@@ -280,10 +299,10 @@ public abstract class Eloquent {
 			if (insertMode) {
 				StringBuilder sb = new StringBuilder();
 				StringBuilder valueSb = new StringBuilder();
-				sb.append("insert into " + mTableName + "(");
+				sb.append("INSERT INTO " + mTableName + "(");
 				valueSb.append(") values(");
 
-				Set<Entry<String, Object>> entrySet = t.fieldsAndValues();
+				Set<Entry<String, Object>> entrySet = model.fieldsAndValues();
 				Iterator<Entry<String, Object>> it = entrySet.iterator();
 
 				int i = 0;
@@ -310,6 +329,8 @@ public abstract class Eloquent {
 
 						}
 					}
+
+					i++;
 				}
 
 				String sqlInsert = sb.toString() + valueSb.toString() + ")";
@@ -320,7 +341,7 @@ public abstract class Eloquent {
 				return true;
 			} else {
 				StringBuilder sb = new StringBuilder();
-				Set<Entry<String, Object>> entrySet = t.fieldsAndValues();
+				Set<Entry<String, Object>> entrySet = model.fieldsAndValues();
 				Iterator<Entry<String, Object>> it = entrySet.iterator();
 
 				int i = 0;
@@ -354,7 +375,8 @@ public abstract class Eloquent {
 				}
 
 				String upgrateSQL = "UPDATE " + mTableName + " SET "
-						+ sb.toString() + " WHERE " + ID_COLUMN + " = " + t.id;
+						+ sb.toString() + " WHERE " + ID_COLUMN + " = "
+						+ model.id;
 				synchronized (mDatabase) {
 					mDatabase.execSQL(upgrateSQL);
 				}
@@ -394,6 +416,9 @@ public abstract class Eloquent {
 
 	private void setField(Model t, String fieldName, Object value)
 			throws IllegalArgumentException {
+		if (value == null)
+			return;
+
 		if (value instanceof Number || value instanceof String
 				|| value instanceof byte[])
 			t.set(fieldName, value);

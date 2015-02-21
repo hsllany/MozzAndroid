@@ -8,6 +8,9 @@ import java.io.ObjectOutputStream;
 
 public final class ObjectByte {
 	public final static byte[] toByteArray(Object obj) {
+		if (obj == null)
+			return null;
+
 		byte[] bytes = null;
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
 		try {
@@ -24,7 +27,11 @@ public final class ObjectByte {
 	}
 
 	public final static Object toObject(byte[] bytes) {
+		if (bytes == null)
+			return null;
+
 		Object obj = null;
+
 		try {
 			ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
 			ObjectInputStream ois = new ObjectInputStream(bis);
