@@ -125,6 +125,16 @@ public abstract class Eloquent {
 		return this;
 	}
 
+	public Eloquent orderBy(String orderBy) {
+		mCollector.buildOrderBy(orderBy);
+		return this;
+	}
+
+	public Eloquent groupBy(String groupBy) {
+		mCollector.buildGroupBy(groupBy);
+		return this;
+	}
+
 	public List<Model> get() {
 		try {
 			if (mTableExist)
@@ -222,7 +232,7 @@ public abstract class Eloquent {
 
 		checkTableExistAndColumn();
 
-		mCollector = new Collector(mTableName, mDatabase, mColumn);
+		mCollector = new QueryBuilder(mTableName, mDatabase, mColumn);
 	}
 
 	Eloquent(Context context, boolean readOnly) {
@@ -241,7 +251,7 @@ public abstract class Eloquent {
 
 		checkTableExistAndColumn();
 
-		mCollector = new Collector(mTableName, mDatabase, mColumn);
+		mCollector = new QueryBuilder(mTableName, mDatabase, mColumn);
 	}
 
 	public Eloquent(Context context, String tableName) {
@@ -512,7 +522,7 @@ public abstract class Eloquent {
 	protected String mTableName = null;
 	private SQLiteDatabase mDatabase;
 
-	private Collector mCollector;
+	private QueryBuilder mCollector;
 
 	private Map<String, ColumnType> mColumn = new HashMap<String, ColumnType>();
 	private boolean mTableExist = false;

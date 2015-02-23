@@ -10,10 +10,10 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
-public class Collector {
+public class QueryBuilder {
 	private final String DEBUG_TAG = this.getClass().getSimpleName();
 
-	Collector(String tableName, SQLiteDatabase sqliteDatabase,
+	QueryBuilder(String tableName, SQLiteDatabase sqliteDatabase,
 			Map<String, ColumnType> columnTypes) {
 		mColumns = columnTypes;
 		mTableName = tableName;
@@ -44,8 +44,24 @@ public class Collector {
 		}
 	}
 
+	void buildOrderBy(String orderBy) {
+		if (mCanBuildQuery) {
+			mOrderBy = orderBy;
+			mIsQueryCosumed = false;
+		}
+	}
+
+	void buildGroupBy(String groupBy) {
+		if (mCanBuildQuery) {
+			mGroupBy = groupBy;
+			mIsQueryCosumed = false;
+		}
+	}
+
 	private void clear() {
 		mSelect = null;
+		mGroupBy = null;
+		mOrderBy = null;
 		mWhereBuilder.setLength(0);
 
 	}
@@ -163,6 +179,12 @@ public class Collector {
 				mQueryBuilder.append(" WHERE " + mWhereBuilder.toString());
 			}
 
+			if (mGroupBy != null)
+				mQueryBuilder.append(mGroupBy);
+
+			if (mOrderBy != null)
+				mQueryBuilder.append(mOrderBy);
+
 			if (mDatabase != null && mDatabase.isOpen()) {
 				debug(mQueryBuilder.toString());
 				clear();
@@ -196,6 +218,8 @@ public class Collector {
 	private Map<String, ColumnType> mColumns;
 
 	private String mSelect;
+	private String mGroupBy;
+	private String mOrderBy;
 	private String mTableName;
 	private StringBuilder mWhereBuilder;
 	private StringBuilder mQueryBuilder;
