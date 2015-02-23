@@ -104,7 +104,7 @@ public class QueryBuilder {
 			}
 		}
 
-		close(cursor);
+		closeCursor(cursor);
 
 		return result;
 	}
@@ -151,13 +151,28 @@ public class QueryBuilder {
 					break;
 				}
 			}
-			close(cursor);
+			closeCursor(cursor);
 			return model;
 		} else {
-			close(cursor);
+			closeCursor(cursor);
 			return null;
 		}
 
+	}
+
+	int count() throws IllegalAccessException {
+		Cursor cursor = buildCount();
+
+		if (cursor == null) {
+			throw new IllegalAccessException(
+					"result has been cosumed, please do a query again.");
+		}
+		int count = 0;
+		if (cursor.moveToFirst())
+			count = cursor.getInt(1);
+		closeCursor(cursor);
+
+		return count;
 	}
 
 	private Cursor build() {
@@ -200,7 +215,56 @@ public class QueryBuilder {
 		return null;
 	}
 
-	private void close(Cursor cursor) {
+	private Cursor buildCount() {
+		if (!mIsQueryCosumed) {
+			if (mQueryBuilder == null) {
+				mQueryBuilder = new StringBuilder();
+			} else {
+				mQueryBuilder.setLength(0);
+			}
+
+			mQueryBuilder.append("SELECT COUNT(*) FROM " + mTableName);
+
+			if (mWhereBuilder.length() > 0) {
+				mQueryBuilder.append(" WHERE " + mWhereBuilder.toString());
+			}
+
+			if (mGroupBy != null)
+				mQueryBuilder.append(mGroupBy);
+
+			if (mDatabase != null && mDatabase.isOpen()) {
+				debug(mQueryBuilder.toString());
+				clear();
+				mIsQueryCosumed = true;
+				mCanBuildQuery = true;
+				return mDatabase.rawQuery(mQueryBuilder.toString(), null);
+			}
+
+			clear();
+			mIsQueryCosumed = true;
+			mCanBuildQuery = true;
+		}
+		return null;
+	}
+
+	boolean delete() {
+		if (!mIsQueryCosumed) {
+			debug("DELETE FROM " + mTableName + " WHERE "
+					+ mWhereBuilder.toString());
+			mDatabase.execSQL("DELETE FROM " + mTableName + " WHERE "
+					+ mWhereBuilder.toString());
+
+			clear();
+			mIsQueryCosumed = true;
+			mCanBuildQuery = true;
+
+			return true;
+		}
+
+		return false;
+	}
+
+	private void closeCursor(Cursor cursor) {
 		if (cursor != null)
 			cursor.close();
 		cursor = null;

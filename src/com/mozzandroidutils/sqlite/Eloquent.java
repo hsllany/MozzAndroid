@@ -85,14 +85,14 @@ public abstract class Eloquent {
 
 	public Eloquent all() {
 		if (mTableExist) {
-			mCollector.buildSelect("*");
+			mQueryBuilder.buildSelect("*");
 		}
 
 		return this;
 	}
 
 	public Eloquent select(String selectSQL) {
-		mCollector.buildSelect(selectSQL);
+		mQueryBuilder.buildSelect(selectSQL);
 		return this;
 	}
 
@@ -105,7 +105,7 @@ public abstract class Eloquent {
 	 * @return this
 	 */
 	public Eloquent where(String whereSQL) {
-		mCollector.buildWhere(whereSQL);
+		mQueryBuilder.buildWhere(whereSQL);
 		return this;
 	}
 
@@ -121,47 +121,51 @@ public abstract class Eloquent {
 				sb.append("AND");
 		}
 
-		mCollector.buildWhere(sb.toString());
+		mQueryBuilder.buildWhere(sb.toString());
 		return this;
 	}
 
 	public Eloquent orderBy(String orderBy) {
-		mCollector.buildOrderBy(orderBy);
+		mQueryBuilder.buildOrderBy(orderBy);
 		return this;
 	}
 
 	public Eloquent groupBy(String groupBy) {
-		mCollector.buildGroupBy(groupBy);
+		mQueryBuilder.buildGroupBy(groupBy);
 		return this;
 	}
 
 	public List<Model> get() {
 		try {
 			if (mTableExist)
-				return mCollector.get();
+				return mQueryBuilder.get();
 			else
 				return null;
 		} catch (IllegalAccessException e) {
 			e.printStackTrace();
 			return null;
+		}
+	}
+
+	public int count() {
+		try {
+			return mQueryBuilder.count();
+		} catch (IllegalAccessException e) {
+			e.printStackTrace();
+			return -1;
 		}
 	}
 
 	public Model first() {
 		try {
 			if (mTableExist)
-				return mCollector.first();
+				return mQueryBuilder.first();
 			else
 				return null;
 		} catch (IllegalAccessException e) {
 			e.printStackTrace();
 			return null;
 		}
-	}
-
-	public void deleteAll() {
-		if (mTableExist)
-			mDatabase.execSQL("delete from " + mTableName);
 	}
 
 	public Model find(int id) {
@@ -232,7 +236,7 @@ public abstract class Eloquent {
 
 		checkTableExistAndColumn();
 
-		mCollector = new QueryBuilder(mTableName, mDatabase, mColumn);
+		mQueryBuilder = new QueryBuilder(mTableName, mDatabase, mColumn);
 	}
 
 	Eloquent(Context context, boolean readOnly) {
@@ -251,7 +255,7 @@ public abstract class Eloquent {
 
 		checkTableExistAndColumn();
 
-		mCollector = new QueryBuilder(mTableName, mDatabase, mColumn);
+		mQueryBuilder = new QueryBuilder(mTableName, mDatabase, mColumn);
 	}
 
 	public Eloquent(Context context, String tableName) {
@@ -259,7 +263,7 @@ public abstract class Eloquent {
 
 		mTableName = tableName.toLowerCase();
 
-		mCollector.changeTableName(mTableName);
+		mQueryBuilder.changeTableName(mTableName);
 	}
 
 	Eloquent(Context context, String tableName, boolean readOnly) {
@@ -267,7 +271,7 @@ public abstract class Eloquent {
 
 		mTableName = tableName.toLowerCase();
 
-		mCollector.changeTableName(mTableName);
+		mQueryBuilder.changeTableName(mTableName);
 	}
 
 	// TODO
@@ -344,11 +348,23 @@ public abstract class Eloquent {
 				}
 
 				String sqlInsert = sb.toString() + valueSb.toString() + ")";
+				Cursor lastInsertIdCursor = null;
 				synchronized (mDatabase) {
 					mDatabase.execSQL(sqlInsert);
+					lastInsertIdCursor = mDatabase.rawQuery(
+							"select last_insert_rowid();", null);
 				}
 
-				return true;
+				if (lastInsertIdCursor != null) {
+					if (lastInsertIdCursor.moveToFirst()) {
+						model.id = lastInsertIdCursor.getInt(1);
+					}
+
+					lastInsertIdCursor.close();
+					return true;
+				}
+
+				return false;
 			} else {
 				StringBuilder sb = new StringBuilder();
 				Set<Entry<String, Object>> entrySet = model.fieldsAndValues();
@@ -413,7 +429,11 @@ public abstract class Eloquent {
 		return false;
 	}
 
-	public void drop() {
+	public boolean delete() {
+		return mQueryBuilder.delete();
+	}
+
+	public void dropTable() {
 		if (mTableExist && !mReadOnly) {
 			String dropSQL = "DROP TABLE " + mTableName;
 			synchronized (mDatabase) {
@@ -475,7 +495,7 @@ public abstract class Eloquent {
 	}
 
 	public void setDebug(boolean openDebug) {
-		mCollector.setDebugMode(openDebug);
+		mQueryBuilder.setDebugMode(openDebug);
 	}
 
 	private static Map<String, ColumnType> createSQLParser(String createSQL) {
@@ -522,7 +542,7 @@ public abstract class Eloquent {
 	protected String mTableName = null;
 	private SQLiteDatabase mDatabase;
 
-	private QueryBuilder mCollector;
+	private QueryBuilder mQueryBuilder;
 
 	private Map<String, ColumnType> mColumn = new HashMap<String, ColumnType>();
 	private boolean mTableExist = false;
