@@ -27,28 +27,10 @@ public abstract class Eloquent {
 
 	private final static String ID_COLUMN = "id";
 
-	/**
-	 * 顺序
-	 * 
-	 * @author PC
-	 * 
-	 */
 	public static enum ORDER {
 		DESC, ASC
 	};
 
-	/**
-	 * 创建表
-	 * 
-	 * @param tableName
-	 *            , 表名
-	 * @param columnNames
-	 *            , 列名
-	 * @param types
-	 *            , 列的类型
-	 * @param context
-	 * @return
-	 */
 	public static boolean create(String tableName, String[] columnNames,
 			ColumnType[] types, Context context) {
 
