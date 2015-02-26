@@ -82,8 +82,8 @@ MozzDB
 --------------------
 使用前，步骤如下：
 
-##创建表格；
-**注：Mozz框架运行的表中，默认含有字段"id",表示主键。**
+1. 创建表格；
+**注：Mozz框架运行的表中，默认含有字段"id"，表示主键。**
 ```java
 String[] columnNames = { "name", "gender", "age", "extra" };
 ColumnType[] columnTypes = { ColumnType.TYPE_TEXT,
@@ -92,7 +92,7 @@ ColumnType[] columnTypes = { ColumnType.TYPE_TEXT,
 Eloquent.create("students", columnNames, columnTypes, this);
 ```
 
-##为每一个表格新建一个类继承Eloquent， 且该类名的命名规则：表名 + Eloquent；
+2. 为每一个表格新建一个类继承Eloquent， 且该类名的命名规则：表名 + Eloquent；
 **注：注意命名应和数据库中表明对应。**
 
 ```java
@@ -104,7 +104,7 @@ class StudentsEloquent extends Eloquent{
 }
 ```
 
-##编写DAO对象（继承Model），其属性映射到表中对应数据。
+3. 编写DAO（Data Access Object）对象（继承Model），其属性映射到表中对应数据。
 **注：必须包含一个无参数的构造方法。**
 ```java
 public class Student extends Model{
@@ -117,7 +117,7 @@ public class Student extends Model{
 }
 ```
 
-##在OnCreate()或OnResume()，或其他函数中创建StudentsEloquent的实例：
+4. 在你的程序中中创建StudentsEloquent的实例，将该表格对应的DAO（Data Access Object）对象作为参数传入构造函数：
 ```java
 StudentsEloquent studentsTable = new StudentsEloquent(this,
 				Student.class);
@@ -158,7 +158,7 @@ int boyNum = studentsTable.select("name").
 ```
 
 
-###通过id查找student,并更新###
+###通过id查找student，并更新###
 ```java
 Student student = studentsTable.find(321);
 student.name = "zhangdao";
@@ -182,12 +182,17 @@ for(int i = 0; i < 1000; i++){
 	student.age = 13
 }
 
-studentsTable.insertAll(class4);
+studentsTable.insertMany(class4);
 ```
 
 ###删除数据###
 ```java
 studentsTable.delete(student);
+```
+
+###批量删除###
+```java
+studentsTable.where("age > 13").delete();
 ```
 
 客户端升级Upgrader
@@ -200,7 +205,7 @@ studentsTable.delete(student);
 ```
 这里code为版本对应编号，应大于AndroidManifest。xml中的versionCode，否则不会触发onCheckNewVersion中hasNew为true的情况，具体见下：
 ```java
-		//定义upgrader,传入升级网址
+		//定义upgrader，传入升级网址
 		final Upgrader upgrader = new Upgrader(
 				"http://test.com/upgrade.json", this);
 				
