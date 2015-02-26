@@ -11,12 +11,12 @@ public class Model {
 		mField = new HashMap<String, Object>();
 	}
 
-	public int id() {
-		return this.id;
+	public long id() {
+		return mId;
 	}
 
 	public boolean hasSetId() {
-		if (this.id >= 0)
+		if (mId >= 0)
 			return true;
 		return false;
 	}
@@ -24,10 +24,8 @@ public class Model {
 	public void set(String fieldName, Object obj)
 			throws IllegalArgumentException {
 		if (fieldName.equalsIgnoreCase("id")) {
-			if (obj instanceof Integer)
-				id = (Integer) obj;
-			else
-				throw new IllegalArgumentException("id must be integer");
+			throw new IllegalArgumentException(
+					"Id can be only get by Eloquenet's query methods. See Eloquenet's where(), all() etc..");
 		} else {
 			mField.put(fieldName, obj);
 		}
@@ -47,9 +45,17 @@ public class Model {
 		return mField.entrySet();
 	}
 
+	void setId(long newId) {
+		mId = newId;
+	}
+
+	void setTableName(String tableName) {
+		mTable = tableName;
+	}
+
 	public String toJson() {
 		StringBuilder jsonBuilder = new StringBuilder();
-		jsonBuilder.append("{\"id\": " + this.id + "");
+		jsonBuilder.append("{\"id\": " + this.mId + "");
 		Set<Entry<String, Object>> entrySet = fieldsAndValues();
 
 		Iterator<Entry<String, Object>> it = entrySet.iterator();
@@ -79,6 +85,6 @@ public class Model {
 	}
 
 	private HashMap<String, Object> mField;
-	String mTable = null;
-	int id = -1;
+	private String mTable = null;
+	private long mId = -1;
 }

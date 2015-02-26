@@ -1,5 +1,6 @@
 package com.mozzandroidutils.test;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import android.app.Activity;
@@ -25,7 +26,6 @@ public class MainActivity extends Activity implements OnClickListener {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		MozzConfig.makeAppDirs(this);
-		testEloquentCreate();
 		testDB();
 	}
 
@@ -43,11 +43,24 @@ public class MainActivity extends Activity implements OnClickListener {
 		StudentsEloquent studentsTable = new StudentsEloquent(this);
 		studentsTable.setDebug(true);
 
-		List<Model> result = studentsTable.where("id > 30").get();
+		List<Model> class402 = new ArrayList<Model>();
 
-		result = studentsTable.select("name").where("id > 66").get();
+		for (int i = 0; i < 1000; i++) {
+			Model student = new Model();
+			student.set("name", "student_" + i);
+			student.set("age", 12 + i);
 
-		System.out.println(result.toString());
+			class402.add(student);
+		}
+
+		long now = System.currentTimeMillis();
+		System.out.println("now is " + now);
+
+		studentsTable.insertMany(class402);
+
+		System.out.println(" insert time spend "
+				+ (System.currentTimeMillis() - now));
+
 	}
 
 	private void testEloquentCreate() {

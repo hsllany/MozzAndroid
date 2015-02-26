@@ -1,8 +1,10 @@
 package com.mozzandroidutils.sqlite;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import com.mozzandroidutils.file.ObjectByte;
 
@@ -48,6 +50,15 @@ public class QueryBuilder {
 		if (mCanBuildQuery) {
 			mOrderBy = orderBy;
 			mIsQueryCosumed = false;
+			mOrderByDesc = null;
+		}
+	}
+
+	void buildOrderByDesc(String orderBy) {
+		if (mCanBuildQuery) {
+			mOrderByDesc = orderBy;
+			mIsQueryCosumed = false;
+			mOrderBy = null;
 		}
 	}
 
@@ -195,10 +206,12 @@ public class QueryBuilder {
 			}
 
 			if (mGroupBy != null)
-				mQueryBuilder.append(mGroupBy);
+				mQueryBuilder.append(" GROUP BY " + mGroupBy);
 
 			if (mOrderBy != null)
-				mQueryBuilder.append(mOrderBy);
+				mQueryBuilder.append(" ORDER BY " + mOrderBy);
+			else if (mOrderByDesc != null)
+				mQueryBuilder.append(" ORDER BY " + mOrderByDesc + " DESC");
 
 			if (mDatabase != null && mDatabase.isOpen()) {
 				debug(mQueryBuilder.toString());
@@ -230,7 +243,7 @@ public class QueryBuilder {
 			}
 
 			if (mGroupBy != null)
-				mQueryBuilder.append(mGroupBy);
+				mQueryBuilder.append(" GROUP BY " + mGroupBy);
 
 			if (mDatabase != null && mDatabase.isOpen()) {
 				debug(mQueryBuilder.toString());
@@ -284,6 +297,7 @@ public class QueryBuilder {
 	private String mSelect;
 	private String mGroupBy;
 	private String mOrderBy;
+	private String mOrderByDesc;
 	private String mTableName;
 	private StringBuilder mWhereBuilder;
 	private StringBuilder mQueryBuilder;

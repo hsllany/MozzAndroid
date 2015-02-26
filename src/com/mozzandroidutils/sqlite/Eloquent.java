@@ -10,6 +10,7 @@ import java.util.Set;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteStatement;
 import android.util.Log;
 
 import com.mozzandroidutils.file.ObjectByte;
@@ -19,17 +20,12 @@ import com.mozzandroidutils.file.ObjectByte;
  * 
  * @author Yang
  * 
- * @param <T>, ±ÿ–Î «Model¿‡ºÃ≥–
  */
 public abstract class Eloquent {
 
 	private String DEBUG_TAG = this.getClass().getSimpleName();
 
 	private final static String ID_COLUMN = "id";
-
-	public static enum ORDER {
-		DESC, ASC
-	};
 
 	public static boolean create(String tableName, String[] columnNames,
 			ColumnType[] types, Context context) {
@@ -57,7 +53,7 @@ public abstract class Eloquent {
 
 		String createSQL = sb.toString() + ")";
 
-		Log.d("Eloquent", createSQL);
+		Log.d("EloquentClass", createSQL);
 		synchronized (database) {
 			database.execSQL(createSQL);
 		}
@@ -112,6 +108,11 @@ public abstract class Eloquent {
 		return this;
 	}
 
+	public Eloquent orderByDesc(String orderBy) {
+		mQueryBuilder.buildOrderByDesc(orderBy);
+		return this;
+	}
+
 	public Eloquent groupBy(String groupBy) {
 		mQueryBuilder.buildGroupBy(groupBy);
 		return this;
@@ -150,7 +151,7 @@ public abstract class Eloquent {
 		}
 	}
 
-	public Model find(int id) {
+	public Model find(long id) {
 
 		if (mTableExist) {
 
@@ -195,8 +196,8 @@ public abstract class Eloquent {
 						break;
 					}
 				}
-				model.id = id;
-				model.mTable = mTableName;
+				model.setId(id);
+				model.setTableName(mTableName);
 				return model;
 			}
 
@@ -256,14 +257,21 @@ public abstract class Eloquent {
 		mQueryBuilder.changeTableName(mTableName);
 	}
 
-	// TODO
-	public boolean saveAll(List<Model> modelList) {
-		// SQLiteStatement insertStatement = mDatabase.compileStatement(sql);
+	public boolean insertMany(List<Model> modelList)
+			throws IllegalArgumentException {
 
-		// if (mTableExist) {
-		// if (mReadOnly)
-		// return false;
-		// }
+		mDatabase.beginTransaction();
+		try {
+			for (Model model : modelList) {
+				model.setId(insertUsingStatement(model));
+			}
+			mDatabase.setTransactionSuccessful();
+		} catch (Exception e) {
+			throw e;
+		} finally {
+			mDatabase.endTransaction();
+		}
+
 		return false;
 	}
 
@@ -293,57 +301,12 @@ public abstract class Eloquent {
 			}
 
 			if (insertMode) {
-				StringBuilder sb = new StringBuilder();
-				StringBuilder valueSb = new StringBuilder();
-				sb.append("INSERT INTO " + mTableName + "(");
-				valueSb.append(") values(");
-
-				Set<Entry<String, Object>> entrySet = model.fieldsAndValues();
-				Iterator<Entry<String, Object>> it = entrySet.iterator();
-
-				int i = 0;
-				while (it.hasNext()) {
-					if (i > 0) {
-						sb.append(",");
-						valueSb.append(",");
-					}
-					Entry<String, Object> entry = it.next();
-					String fieldName = entry.getKey();
-					Object value = entry.getValue();
-
-					if (value != null && mColumn.containsKey(fieldName)) {
-						sb.append(fieldName);
-						ColumnType type = mColumn.get(fieldName);
-						if (type == ColumnType.TYPE_BLOB) {
-							byte[] valueByte = ObjectByte.toByteArray(value);
-
-							for (int j = 0; j < valueByte.length; j++) {
-								valueSb.append(valueByte[j]);
-							}
-						} else {
-							valueSb.append("'" + value.toString() + "'");
-
-						}
-					}
-
-					i++;
-				}
-
-				String sqlInsert = sb.toString() + valueSb.toString() + ")";
-				Cursor lastInsertIdCursor = null;
 				synchronized (mDatabase) {
-					mDatabase.execSQL(sqlInsert);
-					lastInsertIdCursor = mDatabase.rawQuery(
-							"select last_insert_rowid();", null);
-				}
-
-				if (lastInsertIdCursor != null) {
-					if (lastInsertIdCursor.moveToFirst()) {
-						model.id = lastInsertIdCursor.getInt(1);
+					long newId = insertUsingStatement(model);
+					if (newId > 0) {
+						model.setId(newId);
+						return true;
 					}
-
-					lastInsertIdCursor.close();
-					return true;
 				}
 
 				return false;
@@ -384,7 +347,7 @@ public abstract class Eloquent {
 
 				String upgrateSQL = "UPDATE " + mTableName + " SET "
 						+ sb.toString() + " WHERE " + ID_COLUMN + " = "
-						+ model.id;
+						+ model.id();
 				synchronized (mDatabase) {
 					mDatabase.execSQL(upgrateSQL);
 				}
@@ -400,7 +363,7 @@ public abstract class Eloquent {
 	public boolean delete(Model t) {
 		if (t.hasSetId() && mTableExist && !mReadOnly) {
 			String deleteSQL = "DELETE FROM table " + mTableName + " WHERE "
-					+ ID_COLUMN + " = " + t.id;
+					+ ID_COLUMN + " = " + t.id();
 
 			synchronized (mDatabase) {
 				mDatabase.execSQL(deleteSQL);
@@ -452,12 +415,98 @@ public abstract class Eloquent {
 			mColumn.clear();
 			String createSQL = cursor.getString(0);
 			mColumn = createSQLParser(createSQL);
-
 		}
 
 		if (cursor != null)
 			cursor.close();
 
+	}
+
+	private void buildInsertAndColumnOrder() {
+
+		if (mColumnOrder == null || mInsertStatement == null) {
+			mColumnOrder = new HashMap<String, Integer>();
+
+			StringBuilder insertBuilder = new StringBuilder();
+			StringBuilder valueBuilder = new StringBuilder();
+
+			insertBuilder.append("INSERT INTO " + mTableName + " (");
+
+			Iterator<Entry<String, ColumnType>> itr = mColumn.entrySet()
+					.iterator();
+
+			int order = 1;
+			while (itr.hasNext()) {
+				Entry<String, ColumnType> entry = itr.next();
+
+				String columnName = entry.getKey();
+
+				insertBuilder.append(columnName);
+				valueBuilder.append("?");
+
+				if (order < mColumn.size()) {
+					insertBuilder.append(",");
+					valueBuilder.append(",");
+				}
+
+				mColumnOrder.put(columnName, order++);
+
+			}
+
+			insertBuilder.append(") VALUES (" + valueBuilder.toString() + ")");
+			mInsertStatement = mDatabase.compileStatement(insertBuilder
+					.toString());
+		}
+	}
+
+	/**
+	 * Not thread safe
+	 * 
+	 * @param model
+	 * @throws IllegalArgumentException
+	 */
+	private long insertUsingStatement(Model model)
+			throws IllegalArgumentException {
+
+		buildInsertAndColumnOrder();
+
+		Iterator<Entry<String, Object>> itr = model.fieldsAndValues()
+				.iterator();
+		mInsertStatement.clearBindings();
+		while (itr.hasNext()) {
+			Entry<String, Object> entry = itr.next();
+			String keyName = entry.getKey();
+			Object value = entry.getValue();
+
+			ColumnType type = mColumn.get(keyName);
+			int order = mColumnOrder.get(keyName);
+
+			switch (type) {
+			case TYPE_REAL:
+			case TYPE_INTEGER:
+				if (value instanceof Number)
+					if (type == ColumnType.TYPE_INTEGER)
+						mInsertStatement.bindLong(order,
+								((Number) value).longValue());
+					else if (type == ColumnType.TYPE_REAL)
+						mInsertStatement.bindDouble(order,
+								((Number) value).doubleValue());
+					else
+						throw new IllegalArgumentException(keyName
+								+ " column must be Numbers");
+				break;
+
+			case TYPE_TEXT:
+				mInsertStatement.bindString(order, value.toString());
+				break;
+			case TYPE_BLOB:
+				mInsertStatement.bindBlob(order, ObjectByte.toByteArray(value));
+				break;
+			}
+
+		}
+
+		return mInsertStatement.executeInsert();
 	}
 
 	/**
@@ -516,6 +565,7 @@ public abstract class Eloquent {
 			}
 
 			columnTypes.put(keys, type);
+
 		}
 
 		return columnTypes;
@@ -530,4 +580,7 @@ public abstract class Eloquent {
 	private boolean mTableExist = false;
 	private boolean mReadOnly = false;
 
+	// for insertion
+	private Map<String, Integer> mColumnOrder = null;
+	private SQLiteStatement mInsertStatement = null;
 }
