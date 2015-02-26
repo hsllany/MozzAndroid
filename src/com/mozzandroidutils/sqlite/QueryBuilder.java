@@ -73,6 +73,7 @@ public class QueryBuilder {
 		mSelect = null;
 		mGroupBy = null;
 		mOrderBy = null;
+		mOrderByDesc = null;
 		mWhereBuilder.setLength(0);
 
 	}
