@@ -82,7 +82,8 @@ MozzDB
 --------------------
 使用前，步骤如下：
 
-1. 创建表格；
+- 1.创建表格；
+
 **注：Mozz框架运行的表中，默认含有字段"id"，表示主键。**
 ```java
 String[] columnNames = { "name", "gender", "age", "extra" };
@@ -92,7 +93,8 @@ ColumnType[] columnTypes = { ColumnType.TYPE_TEXT,
 Eloquent.create("students", columnNames, columnTypes, this);
 ```
 
-2. 为每一个表格新建一个类继承Eloquent， 且该类名的命名规则：表名 + Eloquent；
+- 2.为每一个表格新建一个类继承Eloquent， 且该类名的命名规则：表名 + Eloquent；
+
 **注：注意命名应和数据库中表明对应。**
 
 ```java
@@ -104,7 +106,8 @@ class StudentsEloquent extends Eloquent{
 }
 ```
 
-3. 编写DAO（Data Access Object）对象（继承Model），其属性映射到表中对应数据。
+- 3.编写DAO（Data Access Object）对象（继承Model），其属性映射到表中对应数据。
+
 **注：必须包含一个无参数的构造方法。**
 ```java
 public class Student extends Model{
@@ -117,7 +120,7 @@ public class Student extends Model{
 }
 ```
 
-4. 在你的程序中中创建StudentsEloquent的实例，将该表格对应的DAO（Data Access Object）对象作为参数传入构造函数：
+- 4.在你的程序中中创建StudentsEloquent的实例，将该表格对应的DAO（Data Access Object）对象作为参数传入构造函数：
 ```java
 StudentsEloquent studentsTable = new StudentsEloquent(this,
 				Student.class);
