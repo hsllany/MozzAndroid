@@ -76,10 +76,10 @@ public class QueryBuilder {
 
 	}
 
-	public List<Object> get(Class<? extends Model> clazz)
+	public List<Model> get(Class<? extends Model> clazz)
 			throws IllegalAccessException {
 		Cursor cursor = build();
-		List<Object> result = new ArrayList<Object>();
+		List<Model> result = new ArrayList<Model>();
 		if (cursor == null) {
 			throw new IllegalAccessException(
 					"result has been cosumed, please do a query again.");

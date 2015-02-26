@@ -83,7 +83,7 @@ MozzDB
 使用前，步骤如下：
 
 ##创建表格；
-**由Mozz框架运行的表中，默认含有字段"id",表示主键。**
+**注：Mozz框架运行的表中，默认含有字段"id",表示主键。**
 ```java
 String[] columnNames = { "name", "gender", "age", "extra" };
 ColumnType[] columnTypes = { ColumnType.TYPE_TEXT,
@@ -93,7 +93,7 @@ Eloquent.create("students", columnNames, columnTypes, this);
 ```
 
 ##为每一个表格新建一个类继承Eloquent， 且该类名的命名规则：表名 + Eloquent；
-**注意命名应和数据库中表明对应。**
+**注：注意命名应和数据库中表明对应。**
 
 ```java
 //对应数据库中students表格
@@ -104,16 +104,20 @@ class StudentsEloquent extends Eloquent{
 }
 ```
 
-##编写DAO对象（继承Model），其属性映射到表中对应数据
+##编写DAO对象（继承Model），其属性映射到表中对应数据。
+**注：必须包含一个无参数的构造方法。**
 ```java
 public class Student extends Model{
+	//需要一个不带参数的构造方法
+	public Student(){};
+	
 	public String name;
 	public int age;
 	public Object extra;
 }
 ```
 
-##在OnCreate()或OnResume(), 或其他函数中创建StudentsEloquent的实例：
+##在OnCreate()或OnResume()，或其他函数中创建StudentsEloquent的实例：
 ```java
 StudentsEloquent studentsTable = new StudentsEloquent(this,
 				Student.class);
@@ -126,18 +130,18 @@ studentsTable.setDebug(true);
 ###查询所有：###
 ```java
 //获取表中所有数据，存入List中。从List
-List<Object> studentsResult = students.all().get();
+List<Model> studentsResult = students.all().get();
 ```
 
 ###复杂查询###
 ```java
 //获取所有name为zhangdao的数据
-List<Object> result = studentsTable
+List<Model> result = studentsTable
 						.where("name = 'zhangdao'")
 						.get();
 						
-//只获取name字段，此时因注意，model对象中的字段应复以合适初值，否则会产生难以预料的错误。
-List<Object> result = studentsTable.select("name").
+//只获取name字段，此时应注意，model对象中的字段应复以合适初值，否则会产生难以预料的错误。
+List<Model> result = studentsTable.select("name").
 						.where("name = 'zhangdao'").orderBy("id").
 						.get();
 
@@ -148,8 +152,8 @@ Model model = studentsTable.where("grade = 3").first();
 Cursor cursor = studentsTable.where("grade = 3").cursor();
 
 //获取条数
-List<Object> result = studentsTable.select("name").
-						.where("name = 'zhangdao'").orderBy("id").
+int boyNum = studentsTable.select("name").
+						.where("gender = 'M'")
 						.count();
 ```
 

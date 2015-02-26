@@ -1,4 +1,4 @@
-package com.mozzandroidutils.test;
+package com.mozz.test;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,6 +18,7 @@ import com.mozzandroidutils.http.Upgrader;
 import com.mozzandroidutils.sqlite.ColumnType;
 import com.mozzandroidutils.sqlite.Eloquent;
 import com.mozzandroidutils.sqlite.Model;
+import com.mozzandroidutils.test.R;
 
 public class MainActivity extends Activity implements OnClickListener {
 
@@ -25,7 +26,9 @@ public class MainActivity extends Activity implements OnClickListener {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-		testDB();
+		StudentsEloquent studentsTable = new StudentsEloquent(this,
+				Student.class);
+
 	}
 
 	@Override
@@ -43,22 +46,7 @@ public class MainActivity extends Activity implements OnClickListener {
 				Student.class);
 		studentsTable.setDebug(true);
 
-		List<Model> class402 = new ArrayList<Model>();
-
-		for (int i = 0; i < 1000; i++) {
-			Student student = new Student();
-			student.name = "hello world + i" + i;
-
-			class402.add(student);
-		}
-
-		long now = System.currentTimeMillis();
-		System.out.println("now is " + now);
-
-		studentsTable.insertMany(class402);
-
-		System.out.println(" insert time spend "
-				+ (System.currentTimeMillis() - now));
+		List<Model> studentResult = studentsTable.all().get();
 
 	}
 

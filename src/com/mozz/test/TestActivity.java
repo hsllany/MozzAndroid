@@ -1,4 +1,4 @@
-package com.mozzandroidutils.test;
+package com.mozz.test;
 
 import android.app.Activity;
 import android.os.Bundle;

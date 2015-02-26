@@ -100,7 +100,7 @@ public abstract class Eloquent {
 		return this;
 	}
 
-	public List<Object> get() {
+	public List<Model> get() {
 		try {
 			if (mTableExist)
 				return mQueryBuilder.get(mModelClass);
@@ -243,7 +243,7 @@ public abstract class Eloquent {
 		mQueryBuilder.changeTableName(mTableName);
 	}
 
-	public boolean insertMany(List<Model> modelList)
+	public boolean insertMany(List<? extends Model> modelList)
 			throws IllegalArgumentException {
 
 		mDatabase.beginTransaction();

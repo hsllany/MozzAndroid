@@ -2,6 +2,10 @@ package com.mozzandroidutils.sqlite;
 
 public abstract class Model {
 
+	public Model() {
+
+	}
+
 	public long id() {
 		return mId;
 	}
