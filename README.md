@@ -1,7 +1,8 @@
 MozzAndroidUtils
 ===================
-作者：hsllany@163.com, everyknoxkyo@gmail.com
-HttpUtils及DownloadHttpUtils 用法
+作者：hsllany@163.com
+
+MozzHttp
 -------------------
 普通网络请求，可用HttpUtils即可。若涉及到文件下载，应用DownloadHttpUtils.
 
@@ -77,10 +78,11 @@ downloader.download("http://www.test.com/a.file", new HttpDownloadListener() {
 }, SDCard.sdCardDir() + "/saveDir");
 ```
 
-DB用法
+MozzDB
 --------------------
 使用前，步骤如下：
-1.创建表格；
+
+##创建表格；
 **由Mozz框架运行的表中，默认含有字段"id",表示主键。**
 ```java
 String[] columnNames = { "name", "gender", "age", "extra" };
@@ -90,7 +92,7 @@ ColumnType[] columnTypes = { ColumnType.TYPE_TEXT,
 Eloquent.create("students", columnNames, columnTypes, this);
 ```
 
-2.为每一个表格新建一个类继承Eloquent， 且该类名的命名规则：表名 + Eloquent；
+##为每一个表格新建一个类继承Eloquent， 且该类名的命名规则：表名 + Eloquent；
 **注意命名应和数据库中表明对应。**
 
 ```java
@@ -102,7 +104,7 @@ class StudentsEloquent extends Eloquent{
 }
 ```
 
-3.编写DAO对象（继承Model），其属性映射到表中对应数据
+##编写DAO对象（继承Model），其属性映射到表中对应数据
 ```java
 public class Student extends Model{
 	public String name;
@@ -111,7 +113,7 @@ public class Student extends Model{
 }
 ```
 
-4.在OnCreate()或OnResume(), 或其他函数中创建StudentsEloquent的实例：
+##在OnCreate()或OnResume(), 或其他函数中创建StudentsEloquent的实例：
 ```java
 StudentsEloquent studentsTable = new StudentsEloquent(this,
 				Student.class);
