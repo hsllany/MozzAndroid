@@ -1,11 +1,11 @@
 package com.mozzandroidutils.sqlite;
 
+import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import android.content.Context;
 import android.database.Cursor;
@@ -22,8 +22,6 @@ import com.mozzandroidutils.file.ObjectByte;
  * 
  */
 public abstract class Eloquent {
-
-	private String DEBUG_TAG = this.getClass().getSimpleName();
 
 	private final static String ID_COLUMN = "id";
 
@@ -87,22 +85,6 @@ public abstract class Eloquent {
 		return this;
 	}
 
-	public Eloquent where(String[] keys, Object[] values) {
-
-		if (keys.length != values.length || !mTableExist)
-			return null;
-
-		StringBuilder sb = new StringBuilder();
-		for (int i = 0; i < keys.length; i++) {
-			sb.append(" " + keys[i] + " = '" + values[i] + "' ");
-			if (i < keys.length - 1)
-				sb.append("AND");
-		}
-
-		mQueryBuilder.buildWhere(sb.toString());
-		return this;
-	}
-
 	public Eloquent orderBy(String orderBy) {
 		mQueryBuilder.buildOrderBy(orderBy);
 		return this;
@@ -118,10 +100,10 @@ public abstract class Eloquent {
 		return this;
 	}
 
-	public List<Model> get() {
+	public List<Object> get() {
 		try {
 			if (mTableExist)
-				return mQueryBuilder.get();
+				return mQueryBuilder.get(mModelClass);
 			else
 				return null;
 		} catch (IllegalAccessException e) {
@@ -139,10 +121,10 @@ public abstract class Eloquent {
 		}
 	}
 
-	public Model first() {
+	public Object first() {
 		try {
 			if (mTableExist)
-				return mQueryBuilder.first();
+				return mQueryBuilder.first(mModelClass);
 			else
 				return null;
 		} catch (IllegalAccessException e) {
@@ -160,7 +142,7 @@ public abstract class Eloquent {
 
 			if (cursor.moveToFirst()) {
 
-				Model model = new Model();
+				Model model = (Model) ObjectGenerator.newObject(mModelClass);
 
 				int columnCount = cursor.getColumnCount();
 
@@ -197,7 +179,6 @@ public abstract class Eloquent {
 					}
 				}
 				model.setId(id);
-				model.setTableName(mTableName);
 				return model;
 			}
 
@@ -208,8 +189,9 @@ public abstract class Eloquent {
 		}
 	}
 
-	public Eloquent(Context context) {
+	public Eloquent(Context context, Class<? extends Model> clazz) {
 		mDatabase = MozzDB.writebleDatabase(context);
+		mModelClass = clazz;
 
 		if (mTableName == null) {
 			String className = this.getClass().getSimpleName();
@@ -222,7 +204,7 @@ public abstract class Eloquent {
 		mQueryBuilder = new QueryBuilder(mTableName, mDatabase, mColumn);
 	}
 
-	Eloquent(Context context, boolean readOnly) {
+	Eloquent(Context context, boolean readOnly, Class<? extends Model> clazz) {
 		if (readOnly) {
 			mDatabase = MozzDB.readOnlyDatabase(context);
 			mReadOnly = true;
@@ -230,6 +212,8 @@ public abstract class Eloquent {
 			mDatabase = MozzDB.writebleDatabase(context);
 		}
 
+		mModelClass = clazz;
+
 		if (mTableName == null) {
 			String className = this.getClass().getSimpleName();
 			mTableName = className.substring(0, className.indexOf("Eloquent"))
@@ -241,16 +225,18 @@ public abstract class Eloquent {
 		mQueryBuilder = new QueryBuilder(mTableName, mDatabase, mColumn);
 	}
 
-	public Eloquent(Context context, String tableName) {
-		this(context);
+	public Eloquent(Context context, String tableName,
+			Class<? extends Model> clazz) {
+		this(context, clazz);
 
 		mTableName = tableName.toLowerCase();
 
 		mQueryBuilder.changeTableName(mTableName);
 	}
 
-	Eloquent(Context context, String tableName, boolean readOnly) {
-		this(context, readOnly);
+	Eloquent(Context context, String tableName, boolean readOnly,
+			Class<? extends Model> clazz) {
+		this(context, readOnly, clazz);
 
 		mTableName = tableName.toLowerCase();
 
@@ -312,36 +298,40 @@ public abstract class Eloquent {
 				return false;
 			} else {
 				StringBuilder sb = new StringBuilder();
-				Set<Entry<String, Object>> entrySet = model.fieldsAndValues();
-				Iterator<Entry<String, Object>> it = entrySet.iterator();
+				Field[] allFields = mModelClass.getDeclaredFields();
 
-				int i = 0;
+				for (int i = 0; i < allFields.length; i++) {
+					Field field = allFields[i];
+					String fieldName = field.getName();
+					Object value;
+					try {
+						value = field.get(model);
 
-				while (it.hasNext()) {
+						if (i > 0)
+							sb.append(",");
 
-					if (i > 0)
-						sb.append(",");
+						if (value != null && mColumn.containsKey(fieldName)) {
+							ColumnType type = mColumn.get(fieldName);
 
-					Entry<String, Object> entry = it.next();
-					String fieldName = entry.getKey();
-					Object value = entry.getValue();
+							if (type == ColumnType.TYPE_BLOB) {
+								sb.append(fieldName + "=");
+								byte[] valueByte = ObjectByte
+										.toByteArray(value);
 
-					if (value != null && mColumn.containsKey(fieldName)) {
-						ColumnType type = mColumn.get(fieldName);
+								for (int j = 0; j < valueByte.length; j++) {
+									sb.append(valueByte[j]);
+								}
 
-						if (type == ColumnType.TYPE_BLOB) {
-							sb.append(fieldName + "=");
-							byte[] valueByte = ObjectByte.toByteArray(value);
-
-							for (int j = 0; j < valueByte.length; j++) {
-								sb.append(valueByte[j]);
+							} else {
+								sb.append(fieldName + " = '" + value.toString()
+										+ "'");
 							}
 
-						} else {
-							sb.append(fieldName + " = '" + value.toString()
-									+ "'");
 						}
-
+					} catch (IllegalAccessException e) {
+						e.printStackTrace();
+					} catch (IllegalArgumentException e) {
+						e.printStackTrace();
 					}
 				}
 
@@ -470,40 +460,46 @@ public abstract class Eloquent {
 
 		buildInsertAndColumnOrder();
 
-		Iterator<Entry<String, Object>> itr = model.fieldsAndValues()
-				.iterator();
+		Field[] allFields = mModelClass.getDeclaredFields();
 		mInsertStatement.clearBindings();
-		while (itr.hasNext()) {
-			Entry<String, Object> entry = itr.next();
-			String keyName = entry.getKey();
-			Object value = entry.getValue();
+		for (int i = 0; i < allFields.length; i++) {
+			Field field = allFields[i];
+			String fieldName = field.getName();
+			Object value;
+			try {
+				value = field.get(model);
 
-			ColumnType type = mColumn.get(keyName);
-			int order = mColumnOrder.get(keyName);
+				ColumnType type = mColumn.get(fieldName);
+				int order = mColumnOrder.get(fieldName);
 
-			switch (type) {
-			case TYPE_REAL:
-			case TYPE_INTEGER:
-				if (value instanceof Number)
-					if (type == ColumnType.TYPE_INTEGER)
-						mInsertStatement.bindLong(order,
-								((Number) value).longValue());
-					else if (type == ColumnType.TYPE_REAL)
-						mInsertStatement.bindDouble(order,
-								((Number) value).doubleValue());
-					else
-						throw new IllegalArgumentException(keyName
-								+ " column must be Numbers");
-				break;
+				switch (type) {
+				case TYPE_REAL:
+				case TYPE_INTEGER:
+					if (value instanceof Number)
+						if (type == ColumnType.TYPE_INTEGER)
+							mInsertStatement.bindLong(order,
+									((Number) value).longValue());
+						else if (type == ColumnType.TYPE_REAL)
+							mInsertStatement.bindDouble(order,
+									((Number) value).doubleValue());
+						else
+							throw new IllegalArgumentException(fieldName
+									+ " column must be Numbers");
+					break;
 
-			case TYPE_TEXT:
-				mInsertStatement.bindString(order, value.toString());
-				break;
-			case TYPE_BLOB:
-				mInsertStatement.bindBlob(order, ObjectByte.toByteArray(value));
-				break;
+				case TYPE_TEXT:
+					mInsertStatement.bindString(order, value.toString());
+					break;
+				case TYPE_BLOB:
+					mInsertStatement.bindBlob(order,
+							ObjectByte.toByteArray(value));
+					break;
+				}
+			} catch (IllegalAccessException e) {
+				e.printStackTrace();
+			} catch (IllegalArgumentException e) {
+				e.printStackTrace();
 			}
-
 		}
 
 		return mInsertStatement.executeInsert();
@@ -583,4 +579,6 @@ public abstract class Eloquent {
 	// for insertion
 	private Map<String, Integer> mColumnOrder = null;
 	private SQLiteStatement mInsertStatement = null;
+
+	private Class<? extends Model> mModelClass = null;
 }

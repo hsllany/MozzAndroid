@@ -25,7 +25,6 @@ public class MainActivity extends Activity implements OnClickListener {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-		MozzConfig.makeAppDirs(this);
 		testDB();
 	}
 
@@ -40,15 +39,15 @@ public class MainActivity extends Activity implements OnClickListener {
 	}
 
 	private void testDB() {
-		StudentsEloquent studentsTable = new StudentsEloquent(this);
+		StudentsEloquent studentsTable = new StudentsEloquent(this,
+				Student.class);
 		studentsTable.setDebug(true);
 
 		List<Model> class402 = new ArrayList<Model>();
 
 		for (int i = 0; i < 1000; i++) {
-			Model student = new Model();
-			student.set("name", "student_" + i);
-			student.set("age", 12 + i);
+			Student student = new Student();
+			student.name = "hello world + i" + i;
 
 			class402.add(student);
 		}
@@ -137,9 +136,7 @@ public class MainActivity extends Activity implements OnClickListener {
 }
 
 class StudentsEloquent extends Eloquent {
-
-	public StudentsEloquent(Context context) {
-		super(context);
+	public StudentsEloquent(Context context, Class<? extends Model> clazz) {
+		super(context, clazz);
 	}
-
 }

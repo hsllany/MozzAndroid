@@ -79,69 +79,109 @@ downloader.download("http://www.test.com/a.file", new HttpDownloadListener() {
 
 DB用法
 --------------------
-**由Mozz框架运行的表中，必须含有字段"id",表示主键。**
+使用前，步骤如下：
+1.创建表格；
+**由Mozz框架运行的表中，默认含有字段"id",表示主键。**
+```java
+String[] columnNames = { "name", "gender", "age", "extra" };
+ColumnType[] columnTypes = { ColumnType.TYPE_TEXT,
+				ColumnType.TYPE_TEXT, ColumnType.TYPE_INTEGER,
+				ColumnType.TYPE_BLOB };
+Eloquent.create("students", columnNames, columnTypes, this);
+```
 
-首先，继承Eloquent（代表数据库中的表）, 类名的规则是：表名 + Eloquent。注意命名应和数据库中表明对应。
+2.为每一个表格新建一个类继承Eloquent， 且该类名的命名规则：表名 + Eloquent；
+**注意命名应和数据库中表明对应。**
 
 ```java
+//对应数据库中students表格
 class StudentsEloquent extends Eloquent{
-
+	public StudentsEloquent(Context context, Class<? extends Model> clazz) {
+		super(context, clazz);
+	}
 }
 ```
+
+3.编写DAO对象（继承Model），其属性映射到表中对应数据
+```java
+public class Student extends Model{
+	public String name;
+	public int age;
+	public Object extra;
+}
+```
+
+4.在OnCreate()或OnResume(), 或其他函数中创建StudentsEloquent的实例：
+```java
+StudentsEloquent studentsTable = new StudentsEloquent(this,
+				Student.class);
+//可打开调试模式，这样所有sql语句都将打印
+studentsTable.setDebug(true);
+```
+
 之后，运用如下：
 
 ###查询所有：###
 ```java
-StudentsEloquent studentTable = new StudentsEloquent();
-List<Model> studentsResult = students.all().get();
+//获取表中所有数据，存入List中。从List
+List<Object> studentsResult = students.all().get();
 ```
 
-###带Where的查找###
+###复杂查询###
 ```java
-//获取所有数据
-List<Model> result = studentTable
-						.where(new String[]{'name'},new String[]{'zhangdao'})
+//获取所有name为zhangdao的数据
+List<Object> result = studentsTable
+						.where("name = 'zhangdao'")
+						.get();
+						
+//只获取name字段，此时因注意，model对象中的字段应复以合适初值，否则会产生难以预料的错误。
+List<Object> result = studentsTable.select("name").
+						.where("name = 'zhangdao'").orderBy("id").
 						.get();
 
 //获取单条数据
-Model model = studentTable.where("grade = 3").first();
+Model model = studentsTable.where("grade = 3").first();
 
 //获取Cursor
-Cursor cursor = studentTable.where("grade = 3").cursor();
+Cursor cursor = studentsTable.where("grade = 3").cursor();
+
+//获取条数
+List<Object> result = studentsTable.select("name").
+						.where("name = 'zhangdao'").orderBy("id").
+						.count();
 ```
 
 
-###查找id,并更新###
+###通过id查找student,并更新###
 ```java
-Model student = studentTable.find(1);
-student.set("name","zhangdao");
-studentTable.save(student);
+Student student = studentsTable.find(321);
+student.name = "zhangdao";
+studentsTable.save(student);
 ```
 
-###插入新数据###
+###插入单条新数据###
 ```java
-Model student = new Student();
-student.set("name","zhangdao");
-studentTable.save(student);
+Student student = new Student();
+student.name = "zhangdao";
+studentsTable.save(student);
+```
+
+###批量插入数据
+Mozz运用了事务机制及预处理机制，大批量数据建议使用insertAll()方法，能达到很好的效率。
+```java
+List<Student> class4 = new ArrayList<Student>();
+for(int i = 0; i < 1000; i++){
+	Student student = new Student();
+	student.name = "student no." + i;
+	student.age = 13
+}
+
+studentsTable.insertAll(class4);
 ```
 
 ###删除数据###
 ```java
-studentTable.delete(student);
-```
-
-###创建表###
-```java
-Eloquent.create("student", new String[] { "name", "age" },
-				new COLUMN_TYPE[] { COLUMN_TYPE.TYPE_TEXT,
-						COLUMN_TYPE.TYPE_INTEGER }, this);
-```
-
-###从Model中获取值###
-```java
-Model student = studentTable.find(7);
-System.out.println(student.get("id"));
-System.out.println(student.get("name"));
+studentsTable.delete(student);
 ```
 
 客户端升级Upgrader

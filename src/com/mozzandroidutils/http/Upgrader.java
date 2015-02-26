@@ -1,13 +1,11 @@
 package com.mozzandroidutils.http;
 
-import java.io.File;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import com.mozzandroidutils.file.MozzConfig;
-
 import android.content.Context;
+
+import com.mozzandroidutils.file.MozzConfig;
 
 public class Upgrader {
 

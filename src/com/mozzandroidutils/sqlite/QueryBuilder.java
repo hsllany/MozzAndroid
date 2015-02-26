@@ -1,16 +1,14 @@
 package com.mozzandroidutils.sqlite;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-
-import com.mozzandroidutils.file.ObjectByte;
 
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
+
+import com.mozzandroidutils.file.ObjectByte;
 
 public class QueryBuilder {
 	private final String DEBUG_TAG = this.getClass().getSimpleName();
@@ -78,9 +76,10 @@ public class QueryBuilder {
 
 	}
 
-	public List<Model> get() throws IllegalAccessException {
+	public List<Object> get(Class<? extends Model> clazz)
+			throws IllegalAccessException {
 		Cursor cursor = build();
-		List<Model> result = new ArrayList<Model>();
+		List<Object> result = new ArrayList<Object>();
 		if (cursor == null) {
 			throw new IllegalAccessException(
 					"result has been cosumed, please do a query again.");
@@ -88,7 +87,7 @@ public class QueryBuilder {
 
 		if (cursor.moveToFirst()) {
 			while (cursor.moveToNext()) {
-				Model model = new Model();
+				Model model = (Model) ObjectGenerator.newObject(clazz);
 				int length = cursor.getColumnCount();
 
 				for (int i = 0; i < length; i++) {
@@ -131,7 +130,8 @@ public class QueryBuilder {
 		return cursor;
 	}
 
-	public Model first() throws IllegalAccessException {
+	public Model first(Class<? extends Model> clazz)
+			throws IllegalAccessException {
 		Cursor cursor = build();
 
 		if (cursor == null) {
@@ -140,7 +140,7 @@ public class QueryBuilder {
 		}
 
 		if (cursor.moveToFirst()) {
-			Model model = new Model();
+			Model model = (Model) ObjectGenerator.newObject(clazz);
 			int length = cursor.getColumnCount();
 
 			for (int i = 0; i < length; i++) {
