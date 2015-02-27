@@ -21,14 +21,15 @@ import com.mozzandroidutils.sqlite.Model;
 import com.mozzandroidutils.test.R;
 
 public class MainActivity extends Activity implements OnClickListener {
+	private StudentsEloquent studentsTable;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-		StudentsEloquent studentsTable = new StudentsEloquent(this,
-				Student.class);
-
+		studentsTable = new StudentsEloquent(this, Student.class);
+		studentsTable.setDebug(true);
+		selectDB();
 	}
 
 	@Override
@@ -41,13 +42,48 @@ public class MainActivity extends Activity implements OnClickListener {
 
 	}
 
-	private void testDB() {
-		StudentsEloquent studentsTable = new StudentsEloquent(this,
-				Student.class);
-		studentsTable.setDebug(true);
+	private void testInsertDB() {
 
-		List<Model> studentResult = studentsTable.all().get();
+		List<Student> class505 = new ArrayList<Student>();
+		for (int i = 0; i < 5000; i++) {
+			Student student = new Student();
+			student.name = "Student_" + i;
+			if (i % 2 == 0)
+				student.gender = "F";
+			else
+				student.gender = "M";
 
+			class505.add(student);
+		}
+
+		studentsTable.insertMany(class505);
+
+		studentsTable.close();
+	}
+
+	private void findDB() {
+		Student student = (Student) studentsTable.find(6464);
+
+		Log.d("DBTEST", student.name + "," + student.gender + ", "
+				+ student.age + ", " + student.id());
+
+		student.name = "zhangdao";
+		studentsTable.save(student);
+
+	}
+
+	private void saveInsertDB() {
+		Student student = new Student();
+		student.name = "yangtao";
+		student.gender = "BOY";
+		student.age = 30;
+
+		studentsTable.save(student);
+		Log.d("DBTEST", student.id() + ": new student id");
+	}
+
+	private void selectDB() {
+		studentsTable.where("id > 0").delete();
 	}
 
 	private void testEloquentCreate() {

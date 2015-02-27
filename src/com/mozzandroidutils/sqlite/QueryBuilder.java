@@ -86,7 +86,8 @@ public class QueryBuilder {
 		}
 
 		if (cursor.moveToFirst()) {
-			while (cursor.moveToNext()) {
+
+			do {
 				Model model = (Model) ObjectGenerator.newObject(clazz);
 				int length = cursor.getColumnCount();
 
@@ -112,7 +113,7 @@ public class QueryBuilder {
 
 				}
 				result.add(model);
-			}
+			} while (cursor.moveToNext());
 		}
 
 		closeCursor(cursor);
