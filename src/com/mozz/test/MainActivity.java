@@ -27,7 +27,7 @@ public class MainActivity extends Activity implements OnClickListener {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-		studentsTable = new StudentsEloquent(this, Student.class);
+		studentsTable = new StudentsEloquent(this);
 		studentsTable.setDebug(true);
 		selectDB();
 	}
@@ -164,7 +164,12 @@ public class MainActivity extends Activity implements OnClickListener {
 }
 
 class StudentsEloquent extends Eloquent {
-	public StudentsEloquent(Context context, Class<? extends Model> clazz) {
-		super(context, clazz);
+	public StudentsEloquent(Context context) {
+		super(context);
+	}
+
+	@Override
+	protected Class<? extends Model> modelClass() {
+		return Student.class;
 	}
 }

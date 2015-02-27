@@ -60,6 +60,63 @@ public abstract class Eloquent {
 		return true;
 	}
 
+	public Eloquent(Context context) {
+		mDatabase = MozzDB.writebleDatabase(context);
+
+		mModelClass = (Class<? extends Model>) modelClass();
+		if (mModelClass == null)
+			throw new IllegalArgumentException(
+					"must pass a no-null class in the ModelClass()");
+
+		if (mTableName == null) {
+			String className = this.getClass().getSimpleName();
+			mTableName = className.substring(0, className.indexOf("Eloquent"))
+					.toLowerCase();
+		}
+
+		checkTableExistAndColumn();
+
+		mQueryBuilder = new QueryBuilder(mTableName, mDatabase, mColumn);
+	}
+
+	Eloquent(Context context, boolean readOnly) {
+		if (readOnly) {
+			mDatabase = MozzDB.readOnlyDatabase(context);
+			mReadOnly = true;
+		} else {
+			mDatabase = MozzDB.writebleDatabase(context);
+		}
+
+		mModelClass = (Class<? extends Model>) modelClass();
+		if (mModelClass == null)
+			throw new IllegalArgumentException(
+					"must pass a no-null class in the ModelClass()");
+
+		if (mTableName == null) {
+			String className = this.getClass().getSimpleName();
+			mTableName = className.substring(0, className.indexOf("Eloquent"))
+					.toLowerCase();
+		}
+
+		checkTableExistAndColumn();
+
+		mQueryBuilder = new QueryBuilder(mTableName, mDatabase, mColumn);
+	}
+
+	public Eloquent(Context context, String tableName) {
+		this(context);
+		mTableName = tableName.toLowerCase();
+		mQueryBuilder.changeTableName(mTableName);
+	}
+
+	Eloquent(Context context, String tableName, boolean readOnly) {
+		this(context, readOnly);
+		mTableName = tableName.toLowerCase();
+		mQueryBuilder.changeTableName(mTableName);
+	}
+
+	abstract protected Class<? extends Model> modelClass();
+
 	public Eloquent all() {
 		if (mTableExist) {
 			mQueryBuilder.buildSelect("*");
@@ -188,60 +245,6 @@ public abstract class Eloquent {
 		} else {
 			return null;
 		}
-	}
-
-	public Eloquent(Context context, Class<? extends Model> clazz) {
-		mDatabase = MozzDB.writebleDatabase(context);
-		mModelClass = clazz;
-
-		if (mTableName == null) {
-			String className = this.getClass().getSimpleName();
-			mTableName = className.substring(0, className.indexOf("Eloquent"))
-					.toLowerCase();
-		}
-
-		checkTableExistAndColumn();
-
-		mQueryBuilder = new QueryBuilder(mTableName, mDatabase, mColumn);
-	}
-
-	Eloquent(Context context, boolean readOnly, Class<? extends Model> clazz) {
-		if (readOnly) {
-			mDatabase = MozzDB.readOnlyDatabase(context);
-			mReadOnly = true;
-		} else {
-			mDatabase = MozzDB.writebleDatabase(context);
-		}
-
-		mModelClass = clazz;
-
-		if (mTableName == null) {
-			String className = this.getClass().getSimpleName();
-			mTableName = className.substring(0, className.indexOf("Eloquent"))
-					.toLowerCase();
-		}
-
-		checkTableExistAndColumn();
-
-		mQueryBuilder = new QueryBuilder(mTableName, mDatabase, mColumn);
-	}
-
-	public Eloquent(Context context, String tableName,
-			Class<? extends Model> clazz) {
-		this(context, clazz);
-
-		mTableName = tableName.toLowerCase();
-
-		mQueryBuilder.changeTableName(mTableName);
-	}
-
-	Eloquent(Context context, String tableName, boolean readOnly,
-			Class<? extends Model> clazz) {
-		this(context, readOnly, clazz);
-
-		mTableName = tableName.toLowerCase();
-
-		mQueryBuilder.changeTableName(mTableName);
 	}
 
 	public boolean insertMany(List<? extends Model> modelList)
