@@ -1,11 +1,12 @@
 package com.mozzandroidutils.sqlite;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 
 import android.util.Log;
 
 public class ObjectGenerator {
-	public static Object newObject(Class<?> clazz) {
+	public static <T> T newObject(Class<T> clazz) {
 		try {
 			return clazz.newInstance();
 		} catch (InstantiationException | IllegalAccessException e) {
@@ -19,6 +20,11 @@ public class ObjectGenerator {
 		Class<?> objectClazz = object.getClass();
 		try {
 			Field field = objectClazz.getDeclaredField(fieldName);
+			int modifier = field.getModifiers();
+			if ((modifier & Modifier.FINAL) > 0
+					|| (modifier & Modifier.STATIC) > 0
+					|| (modifier & Modifier.NATIVE) > 0)
+				return false;
 			field.setAccessible(true);
 			try {
 				field.set(object, value);

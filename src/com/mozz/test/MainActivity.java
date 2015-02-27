@@ -157,6 +157,10 @@ public class MainActivity extends Activity implements OnClickListener {
 		}
 
 	}
+
+	public <T> T getT(List<T> t) {
+		return null;
+	}
 }
 
 class StudentsEloquent extends Eloquent {

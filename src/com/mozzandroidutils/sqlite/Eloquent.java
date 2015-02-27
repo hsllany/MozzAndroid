@@ -1,6 +1,7 @@
 package com.mozzandroidutils.sqlite;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -302,6 +303,13 @@ public abstract class Eloquent {
 
 				for (int i = 0; i < allFields.length; i++) {
 					Field field = allFields[i];
+
+					int modifier = field.getModifiers();
+					if ((modifier & Modifier.FINAL) > 0
+							|| (modifier & Modifier.STATIC) > 0
+							|| (modifier & Modifier.NATIVE) > 0)
+						continue;
+
 					String fieldName = field.getName();
 					Object value;
 					try {
@@ -326,7 +334,6 @@ public abstract class Eloquent {
 								sb.append(fieldName + " = '" + value.toString()
 										+ "'");
 							}
-
 						}
 					} catch (IllegalAccessException e) {
 						e.printStackTrace();
@@ -464,6 +471,13 @@ public abstract class Eloquent {
 		mInsertStatement.clearBindings();
 		for (int i = 0; i < allFields.length; i++) {
 			Field field = allFields[i];
+
+			int modifier = field.getModifiers();
+			if ((modifier & Modifier.FINAL) > 0
+					|| (modifier & Modifier.STATIC) > 0
+					|| (modifier & Modifier.NATIVE) > 0)
+				continue;
+
 			String fieldName = field.getName();
 			Object value;
 			try {
