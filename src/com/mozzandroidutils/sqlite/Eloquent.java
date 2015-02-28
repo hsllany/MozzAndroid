@@ -331,6 +331,10 @@ public abstract class Eloquent {
 							|| (modifier & Modifier.NATIVE) > 0)
 						continue;
 
+					Ingnore annotation = field.getAnnotation(Ingnore.class);
+					if (annotation != null)
+						continue;
+
 					String fieldName = field.getName();
 					Object value;
 					try {
@@ -497,6 +501,10 @@ public abstract class Eloquent {
 			if ((modifier & Modifier.FINAL) > 0
 					|| (modifier & Modifier.STATIC) > 0
 					|| (modifier & Modifier.NATIVE) > 0)
+				continue;
+
+			Ingnore annotation = field.getAnnotation(Ingnore.class);
+			if (annotation != null)
 				continue;
 
 			String fieldName = field.getName();

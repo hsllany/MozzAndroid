@@ -93,7 +93,7 @@ ColumnType[] columnTypes = { ColumnType.TYPE_TEXT,
 Eloquent.create("students", columnNames, columnTypes, this);
 ```
 
-- 2.编写DAO（Data Access Object）对象（继承Model），其属性映射到表中对应数据。
+- 2.编写DAO（Data Access Object）对象（继承Model），其属性对应表中数据，会被Mozz自动解析。（带有final，static以及natvie，以及带有@Ingnore注解的属性，不会被Mozz处理）。
 
 **注：必须包含一个无参数的构造方法。**
 ```java
@@ -104,6 +104,13 @@ public class Student extends Model{
 	public String name;
 	public int age;
 	public Object extra;
+	
+	//如果存在不被Mozz框架解析的属性，需要加上Ingnore注解
+	@Ingnore
+	public int otherIntField = 3;
+	
+	//static不会被映射到表格中
+	public static int staticIntField = 5;
 }
 ```
 

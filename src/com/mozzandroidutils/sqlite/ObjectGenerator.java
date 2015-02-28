@@ -25,6 +25,11 @@ public class ObjectGenerator {
 					|| (modifier & Modifier.STATIC) > 0
 					|| (modifier & Modifier.NATIVE) > 0)
 				return false;
+
+			Ingnore annotation = field.getAnnotation(Ingnore.class);
+			if (annotation != null)
+				return false;
+
 			field.setAccessible(true);
 			try {
 				field.set(object, value);
