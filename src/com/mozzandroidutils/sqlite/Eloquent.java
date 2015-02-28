@@ -2,6 +2,7 @@ package com.mozzandroidutils.sqlite;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -247,12 +248,29 @@ public abstract class Eloquent {
 		}
 	}
 
-	public boolean insertMany(List<? extends Model> modelList)
+	public boolean insertMany(Collection<? extends Model> modelList)
 			throws IllegalArgumentException {
 
 		mDatabase.beginTransaction();
 		try {
 			for (Model model : modelList) {
+				model.setId(insertUsingStatement(model));
+			}
+			mDatabase.setTransactionSuccessful();
+		} catch (Exception e) {
+			throw e;
+		} finally {
+			mDatabase.endTransaction();
+		}
+
+		return false;
+	}
+
+	public boolean insertMany(Model[] modelList) {
+		mDatabase.beginTransaction();
+		try {
+			for (int i = 0; i < modelList.length; i++) {
+				Model model = modelList[i];
 				model.setId(insertUsingStatement(model));
 			}
 			mDatabase.setTransactionSuccessful();

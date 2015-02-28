@@ -93,20 +93,7 @@ ColumnType[] columnTypes = { ColumnType.TYPE_TEXT,
 Eloquent.create("students", columnNames, columnTypes, this);
 ```
 
-- 2.为每一个表格新建一个类继承Eloquent， 且该类名的命名规则：表名 + Eloquent；
-
-**注：注意命名应和数据库中表明对应。**
-
-```java
-//对应数据库中students表格
-class StudentsEloquent extends Eloquent{
-	public StudentsEloquent(Context context, Class<? extends Model> clazz) {
-		super(context, clazz);
-	}
-}
-```
-
-- 3.编写DAO（Data Access Object）对象（继承Model），其属性映射到表中对应数据。
+- 2.编写DAO（Data Access Object）对象（继承Model），其属性映射到表中对应数据。
 
 **注：必须包含一个无参数的构造方法。**
 ```java
@@ -120,10 +107,28 @@ public class Student extends Model{
 }
 ```
 
+- 3.为每一个表格新建一个类继承Eloquent， 且该类名的命名规则：表名 + Eloquent；
+
+**注：注意命名应和数据库中表明对应。**
+
+```java
+//对应数据库中students表格
+class StudentsEloquent extends Eloquent{
+	public StudentsEloquent(Context context) {
+		super(context, clazz);
+	}
+	
+	@Override
+	protected Class<? extends Model> modelClass() {
+		//在这里把表格对应的Model类返回
+		return Student.class;
+	}
+}
+```
+
 - 4.在你的程序中中创建StudentsEloquent的实例，将该表格对应的DAO（Data Access Object）对象作为参数传入构造函数：
 ```java
-StudentsEloquent studentsTable = new StudentsEloquent(this,
-				Student.class);
+StudentsEloquent studentsTable = new StudentsEloquent(this);
 //可打开调试模式，这样所有sql语句都将打印
 studentsTable.setDebug(true);
 ```
@@ -176,7 +181,7 @@ studentsTable.save(student);
 ```
 
 ###批量插入数据
-Mozz运用了事务机制及预处理机制，大批量数据建议使用insertAll()方法，能达到很好的效率。
+Mozz运用了事务机制及预处理机制，大批量数据建议使用insertMany()方法，能达到很好的效率。
 ```java
 List<Student> class4 = new ArrayList<Student>();
 for(int i = 0; i < 1000; i++){
