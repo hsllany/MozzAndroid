@@ -93,7 +93,9 @@ ColumnType[] columnTypes = { ColumnType.TYPE_TEXT,
 Eloquent.create("students", columnNames, columnTypes, this);
 ```
 
-- 2.编写DAO（Data Access Object）对象（继承Model），其属性对应表中数据，会被Mozz自动解析。（带有final，static以及natvie，以及带有@Ingnore注解的属性，不会被Mozz处理）。
+- 2.编写DAO（Data Access Object）对象（继承Model），其属性对应表中数据，会被Mozz自动解析。
+
+（带有final，static以及natvie，以及带有@Ingnore注解的属性，不会被Mozz处理）。
 
 **注：必须包含一个无参数的构造方法。**
 ```java
@@ -116,6 +118,8 @@ public class Student extends Model{
 
 - 3.为每一个表格新建一个类继承Eloquent， 且该类名的命名规则：表名 + Eloquent；
 
+并在modelClass中，将该表格对应的Model类型返回。
+
 **注：注意命名应和数据库中表明对应。**
 
 ```java
@@ -133,9 +137,10 @@ class StudentsEloquent extends Eloquent{
 }
 ```
 
-- 4.在你的程序中中创建StudentsEloquent的实例，将该表格对应的DAO（Data Access Object）对象作为参数传入构造函数：
+- 4.在你的程序中中创建StudentsEloquent的实例：
 ```java
 StudentsEloquent studentsTable = new StudentsEloquent(this);
+
 //可打开调试模式，这样所有sql语句都将打印
 studentsTable.setDebug(true);
 ```
