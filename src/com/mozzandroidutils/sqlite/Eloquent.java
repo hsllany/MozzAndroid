@@ -400,6 +400,14 @@ public abstract class Eloquent {
 		return mQueryBuilder.delete();
 	}
 
+	public void execSQL(String sql) {
+		mDatabase.execSQL(sql);
+	}
+
+	public Cursor query(String sql) {
+		return mDatabase.rawQuery(sql, null);
+	}
+
 	public void dropTable() {
 		if (mTableExist && !mReadOnly) {
 			String dropSQL = "DROP TABLE " + mTableName;

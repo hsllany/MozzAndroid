@@ -6,17 +6,18 @@ public abstract class Model {
 
 	}
 
-	public long id() {
+	public final long id() {
 		return mId;
 	}
 
-	public boolean hasSetId() {
+	public final boolean hasSetId() {
 		if (mId >= 0)
 			return true;
 		return false;
 	}
 
-	void set(String fieldName, Object value) throws IllegalArgumentException {
+	final void set(String fieldName, Object value)
+			throws IllegalArgumentException {
 		if (fieldName.equalsIgnoreCase("id")) {
 			if (value instanceof Long || value instanceof Integer) {
 				ObjectGenerator.set(this, fieldName,
@@ -29,7 +30,7 @@ public abstract class Model {
 		}
 	}
 
-	void setId(long newId) {
+	final void setId(long newId) {
 		mId = newId;
 	}
 
