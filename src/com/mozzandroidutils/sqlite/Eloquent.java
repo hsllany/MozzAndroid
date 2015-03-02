@@ -64,7 +64,7 @@ public abstract class Eloquent {
 	public Eloquent(Context context) {
 		mDatabase = MozzDB.writebleDatabase(context);
 
-		mModelClass = (Class<? extends Model>) modelClass();
+		mModelClass = modelClass();
 		if (mModelClass == null)
 			throw new IllegalArgumentException(
 					"must pass a no-null class in the ModelClass()");

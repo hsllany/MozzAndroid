@@ -6,7 +6,6 @@ import com.mozzandroidutils.sqlite.Model;
 public class Student extends Model {
 
 	public Student() {
-
 	}
 
 	public String name = "";

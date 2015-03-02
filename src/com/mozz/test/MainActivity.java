@@ -27,9 +27,7 @@ public class MainActivity extends Activity implements OnClickListener {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-		studentsTable = new StudentsEloquent(this);
-		studentsTable.setDebug(true);
-		selectDB();
+		Student student = new Student();
 	}
 
 	@Override
