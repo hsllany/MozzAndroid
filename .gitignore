@@ -1,6 +1,11 @@
 /bin
 /gen
-/.settings
+/settings
 /assets
 /res
 /libs
+*.classpath
+*.project
+*.png
+proguard-project.txt
+project.properties
