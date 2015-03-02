@@ -1,6 +1,6 @@
-bin
-gen
-.settings
-assets
-res
-libs
+/bin
+/gen
+/.settings
+/assets
+/res
+/libs
