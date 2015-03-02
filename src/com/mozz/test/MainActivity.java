@@ -13,6 +13,9 @@ import android.view.View.OnClickListener;
 
 import com.mozzandroidutils.file.MozzConfig;
 import com.mozzandroidutils.http.HttpDownloadListener;
+import com.mozzandroidutils.http.HttpListener;
+import com.mozzandroidutils.http.HttpResponse;
+import com.mozzandroidutils.http.HttpUtils;
 import com.mozzandroidutils.http.UpgradeListener;
 import com.mozzandroidutils.http.Upgrader;
 import com.mozzandroidutils.sqlite.ColumnType;
@@ -27,7 +30,28 @@ public class MainActivity extends Activity implements OnClickListener {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-		Student student = new Student();
+
+		HttpUtils http = new HttpUtils();
+
+		final long time1 = System.currentTimeMillis();
+		long useTime = 0;
+
+		http.get("http://news.baidu.com", new HttpListener() {
+
+			@Override
+			public void onSuccess(HttpResponse response) {
+				if (response.status == HTTP_OK)
+					System.out.println("jiandan:"
+							+ (System.currentTimeMillis() - time1));
+
+			}
+
+			@Override
+			public void onFail(HttpResponse response) {
+				// TODO Auto-generated method stub
+
+			}
+		});
 	}
 
 	@Override

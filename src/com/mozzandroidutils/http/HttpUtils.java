@@ -21,17 +21,16 @@ import java.util.concurrent.Executors;
  * 
  */
 public class HttpUtils {
+
 	private String DEBUG_TAG = this.getClass().getSimpleName();
 	/**
 	 * The executor for run http request
 	 */
 	protected static ExecutorService httpExecutor;
 
-	protected static int THREAD_POOL_SIZE = 5;
-
 	public HttpUtils() {
 		if (httpExecutor == null) {
-			httpExecutor = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
+			httpExecutor = Executors.newCachedThreadPool();
 		}
 	}
 
@@ -76,6 +75,7 @@ public class HttpUtils {
 	 */
 	public void post(String url, HttpListener l,
 			HashMap<String, String> parameters) {
+
 		StringBuilder sb = new StringBuilder();
 		Iterator<Map.Entry<String, String>> itr = parameters.entrySet()
 				.iterator();
@@ -121,6 +121,7 @@ public class HttpUtils {
 				urlConnection.setDoOutput(true);
 				urlConnection.setRequestMethod("POST");
 				urlConnection.setUseCaches(false);
+				urlConnection.setChunkedStreamingMode(0);
 				urlConnection.connect();
 
 				PrintWriter printer = new PrintWriter(

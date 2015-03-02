@@ -42,9 +42,13 @@ public class DownloaderHttpUtils extends HttpUtils {
 				conn.setReadTimeout(20000);
 				conn.connect();
 
-				fileSize = conn.getHeaderFieldInt("Content-Length", 0);
-
-				mListener.onDownloadStart(fileSize);
+				fileSize = conn.getHeaderFieldInt("Content-Length", -1);
+				if (fileSize >= 0) {
+					mListener.onDownloadStart(fileSize);
+				} else {
+					// for chunked transfer encoding
+					mListener.onDownloadStart(-1);
+				}
 
 				in = conn.getInputStream();
 				out = new FileOutputStream(mFile);
