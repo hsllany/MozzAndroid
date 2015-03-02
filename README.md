@@ -1,6 +1,6 @@
 MozzAndroidUtils
 ===================
-作者：hsllany@163.com
+作者：hsllany@163.com， everyknoxkyo@gmail.com
 
 MozzHttp
 -------------------
