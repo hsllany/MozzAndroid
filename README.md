@@ -137,6 +137,14 @@ class StudentsEloquent extends Eloquent{
 }
 ```
 
+若要使用其他的table name，应加上TableName注解
+```java
+@TableName(tablename = "YouTable")
+class StudentsEloquenet extends Eloquenet{
+...
+}
+```
+
 - 4.在你的程序中中创建StudentsEloquent的实例：
 ```java
 StudentsEloquent studentsTable = new StudentsEloquent(this);
