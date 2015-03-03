@@ -4,15 +4,17 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.HashMap;
+import java.net.URLConnection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import android.util.Log;
 
 /**
  * Http tools for Android application
@@ -73,8 +75,7 @@ public class HttpUtils {
 	 *            , HashMap<String, String> that contains name field and value
 	 *            field of post data;
 	 */
-	public void post(String url, HttpListener l,
-			HashMap<String, String> parameters) {
+	public void post(String url, HttpListener l, Map<String, String> parameters) {
 
 		StringBuilder sb = new StringBuilder();
 		Iterator<Map.Entry<String, String>> itr = parameters.entrySet()
@@ -108,51 +109,55 @@ public class HttpUtils {
 
 		@Override
 		public void run() {
-			HttpResponse response = new HttpResponse();
-			response.html = null;
-			response.status = -1;
+			HttpResponse response = null;
 			StringBuilder sb = new StringBuilder();
+			HttpURLConnection urlConnection = null;
+			URL url = null;
 
-			URL url;
 			try {
 				url = new URL(mURL);
-				HttpURLConnection urlConnection = (HttpURLConnection) url
-						.openConnection();
+				urlConnection = (HttpURLConnection) url.openConnection();
 				urlConnection.setDoOutput(true);
+				urlConnection.setDoInput(true);
 				urlConnection.setRequestMethod("POST");
 				urlConnection.setUseCaches(false);
-				urlConnection.setChunkedStreamingMode(0);
+
+				if (postData.length() > 512)
+					urlConnection.setChunkedStreamingMode(5);
 				urlConnection.connect();
 
-				PrintWriter printer = new PrintWriter(
-						urlConnection.getOutputStream());
-
-				printer.println(postData);
-				printer.flush();
-				printer.close();
+				OutputStreamWriter osw = new OutputStreamWriter(
+						urlConnection.getOutputStream(), "UTF-8");
+				osw.write(postData);
+				osw.flush();
+				osw.close();
 
 				InputStream in = urlConnection.getInputStream();
 				BufferedReader br = new BufferedReader(
 						new InputStreamReader(in));
 
-				String line = "";
+				String line = null;
+
 				while ((line = br.readLine()) != null) {
 					sb.append(line);
 				}
 				br.close();
 				in.close();
 
-				response.html = sb.toString();
-				response.status = urlConnection.getResponseCode();
+				response = new HttpResponse();
+				response.setEntity(sb.toString());
+				response.setStatus(urlConnection.getResponseCode());
 
-				urlConnection.disconnect();
 				mListener.onSuccess(response);
 			} catch (MalformedURLException e) {
 				e.printStackTrace();
-				mListener.onFail(response);
+				mListener.onFail(e);
 			} catch (IOException e) {
 				e.printStackTrace();
-				mListener.onFail(response);
+				mListener.onFail(e);
+			} finally {
+				if (urlConnection != null)
+					urlConnection.disconnect();
 			}
 		}
 
@@ -171,18 +176,18 @@ public class HttpUtils {
 
 		@Override
 		public void run() {
-			HttpResponse response = new HttpResponse();
-			response.html = null;
-			response.status = -1;
+			HttpResponse response = null;
 			StringBuilder sb = new StringBuilder();
-			URL url;
+			HttpURLConnection urlConnection = null;
+			URL url = null;
+
 			try {
 				url = new URL(mURL);
-				HttpURLConnection urlConnection = (HttpURLConnection) url
-						.openConnection();
-
+				urlConnection = (HttpURLConnection) url.openConnection();
+				urlConnection.setUseCaches(true);
 				urlConnection.connect();
 				InputStream in = urlConnection.getInputStream();
+
 				BufferedReader br = new BufferedReader(
 						new InputStreamReader(in));
 
@@ -193,20 +198,21 @@ public class HttpUtils {
 				br.close();
 				in.close();
 
-				response.html = sb.toString();
-				response.status = urlConnection.getResponseCode();
-
-				urlConnection.disconnect();
+				response = new HttpResponse();
+				response.setEntity(sb.toString());
+				response.setStatus(urlConnection.getResponseCode());
 
 				mListener.onSuccess(response);
 			} catch (MalformedURLException e) {
 				e.printStackTrace();
-				mListener.onFail(response);
+				mListener.onFail(e);
 			} catch (IOException e) {
 				e.printStackTrace();
-				mListener.onFail(response);
+				mListener.onFail(e);
+			} finally {
+				if (urlConnection != null)
+					urlConnection.disconnect();
 			}
-
 		}
 
 		private String mURL;

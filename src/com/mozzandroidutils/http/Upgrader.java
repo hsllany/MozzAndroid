@@ -24,9 +24,10 @@ public class Upgrader {
 
 			@Override
 			public void onSuccess(HttpResponse response) {
-				if (response.status == HTTP_OK && mUpgradeListener != null) {
+				if (response.status() == HTTP_OK && mUpgradeListener != null) {
 					try {
-						JSONObject jsonObject = new JSONObject(response.html);
+						JSONObject jsonObject = new JSONObject(response
+								.entity());
 						int serverCode = jsonObject.getInt("versionCode");
 						String serverVersion = jsonObject
 								.getString("versionName");
@@ -52,7 +53,7 @@ public class Upgrader {
 			}
 
 			@Override
-			public void onFail(HttpResponse response) {
+			public void onFail(Exception e) {
 				if (mUpgradeListener != null) {
 					mUpgradeListener.onCheckFailed();
 				}

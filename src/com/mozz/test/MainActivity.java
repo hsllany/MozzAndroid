@@ -1,7 +1,9 @@
 package com.mozz.test;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import android.app.Activity;
 import android.content.Context;
@@ -36,21 +38,26 @@ public class MainActivity extends Activity implements OnClickListener {
 		final long time1 = System.currentTimeMillis();
 		long useTime = 0;
 
-		http.get("http://news.baidu.com", new HttpListener() {
+		Map<String, String> postData = new HashMap<String, String>();
+
+		postData.put("email", "shituapp@emebroad.com");
+		postData.put("password", "weibohao1409");
+		http.get("http://www.baidu.com", new HttpListener() {
 
 			@Override
 			public void onSuccess(HttpResponse response) {
-				if (response.status == HTTP_OK)
-					System.out.println("jiandan:"
-							+ (System.currentTimeMillis() - time1));
+				if (response.ok()) {
+					Log.d("HTP", response.entity());
+					Log.d("HTP", "time:" + (System.currentTimeMillis() - time1));
+				}
 
 			}
 
 			@Override
-			public void onFail(HttpResponse response) {
-				// TODO Auto-generated method stub
-
+			public void onFail(Exception e) {
+				Log.d("HTP", e.getMessage());
 			}
+
 		});
 	}
 

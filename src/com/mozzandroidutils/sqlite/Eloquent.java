@@ -602,6 +602,7 @@ public abstract class Eloquent {
 	}
 
 	public void setDebug(boolean openDebug) {
+		mDebug = openDebug;
 		mQueryBuilder.setDebugMode(openDebug);
 	}
 
@@ -660,6 +661,7 @@ public abstract class Eloquent {
 	private Map<String, ColumnType> mColumn = new HashMap<String, ColumnType>();
 	private boolean mTableExist = false;
 	private boolean mReadOnly = false;
+	private boolean mDebug = false;
 
 	// for insertion
 	private Map<String, Integer> mColumnOrder = null;
