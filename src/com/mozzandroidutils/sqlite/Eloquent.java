@@ -1,5 +1,6 @@
 package com.mozzandroidutils.sqlite;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.Collection;
@@ -18,15 +19,27 @@ import android.util.Log;
 import com.mozzandroidutils.file.ObjectByte;
 
 /**
- * 代表数据库中的表
+ * Represent the table in the database.
  * 
  * @author Yang
  * 
  */
 public abstract class Eloquent {
 
+	/**
+	 * default key autoincrement column name
+	 */
 	private final static String ID_COLUMN = "id";
 
+	/**
+	 * Create a new table with ID_COLUMN key by default.
+	 * 
+	 * @param tableName
+	 * @param columnNames
+	 * @param types
+	 * @param context
+	 * @return
+	 */
 	public static boolean create(String tableName, String[] columnNames,
 			ColumnType[] types, Context context) {
 
@@ -61,6 +74,10 @@ public abstract class Eloquent {
 		return true;
 	}
 
+	/**
+	 * @param context
+	 *            , Context
+	 */
 	public Eloquent(Context context) {
 		mDatabase = MozzDB.writebleDatabase(context);
 
@@ -69,7 +86,10 @@ public abstract class Eloquent {
 			throw new IllegalArgumentException(
 					"must pass a no-null class in the ModelClass()");
 
-		if (mTableName == null) {
+		TableName tableAnotation = getClass().getAnnotation(TableName.class);
+		if (tableAnotation != null)
+			mTableName = tableAnotation.tablename();
+		else {
 			String className = this.getClass().getSimpleName();
 			mTableName = className.substring(0, className.indexOf("Eloquent"))
 					.toLowerCase();
@@ -80,6 +100,14 @@ public abstract class Eloquent {
 		mQueryBuilder = new QueryBuilder(mTableName, mDatabase, mColumn);
 	}
 
+	/**
+	 * 
+	 * @param context
+	 *            , Context
+	 * @param readOnly
+	 *            , boolean, whether use a readonly database or writeble
+	 *            database
+	 */
 	Eloquent(Context context, boolean readOnly) {
 		if (readOnly) {
 			mDatabase = MozzDB.readOnlyDatabase(context);
@@ -89,11 +117,15 @@ public abstract class Eloquent {
 		}
 
 		mModelClass = (Class<? extends Model>) modelClass();
+
 		if (mModelClass == null)
 			throw new IllegalArgumentException(
 					"must pass a no-null class in the ModelClass()");
 
-		if (mTableName == null) {
+		TableName tableAnotation = getClass().getAnnotation(TableName.class);
+		if (tableAnotation != null)
+			mTableName = tableAnotation.tablename();
+		else {
 			String className = this.getClass().getSimpleName();
 			mTableName = className.substring(0, className.indexOf("Eloquent"))
 					.toLowerCase();
@@ -102,18 +134,6 @@ public abstract class Eloquent {
 		checkTableExistAndColumn();
 
 		mQueryBuilder = new QueryBuilder(mTableName, mDatabase, mColumn);
-	}
-
-	public Eloquent(Context context, String tableName) {
-		this(context);
-		mTableName = tableName.toLowerCase();
-		mQueryBuilder.changeTableName(mTableName);
-	}
-
-	Eloquent(Context context, String tableName, boolean readOnly) {
-		this(context, readOnly);
-		mTableName = tableName.toLowerCase();
-		mQueryBuilder.changeTableName(mTableName);
 	}
 
 	abstract protected Class<? extends Model> modelClass();
