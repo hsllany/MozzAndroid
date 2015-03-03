@@ -77,27 +77,30 @@ public class HttpUtils {
 	 */
 	public void post(String url, HttpListener l, Map<String, String> parameters) {
 
-		StringBuilder sb = new StringBuilder();
-		Iterator<Map.Entry<String, String>> itr = parameters.entrySet()
-				.iterator();
+		if (parameters != null) {
+			StringBuilder sb = new StringBuilder();
+			Iterator<Map.Entry<String, String>> itr = parameters.entrySet()
+					.iterator();
 
-		int i = 0;
+			int i = 0;
 
-		while (itr.hasNext()) {
-			Map.Entry<String, String> entry = itr.next();
-			String key = entry.getKey();
-			String value = entry.getValue();
-			if (i == 0)
-				sb.append(key + "=" + value);
-			else
-				sb.append("&" + key + "=" + value);
+			while (itr.hasNext()) {
+				Map.Entry<String, String> entry = itr.next();
+				String key = entry.getKey();
+				String value = entry.getValue();
+				if (i == 0)
+					sb.append(key + "=" + value);
+				else
+					sb.append("&" + key + "=" + value);
 
-			i++;
+				i++;
+			}
+
+			httpExecutor.execute(new HttpPost(url, l, sb.toString()));
+		} else {
+			httpExecutor.execute(new HttpPost(url, l, null));
 		}
 
-		System.out.println(sb.toString());
-
-		httpExecutor.execute(new HttpPost(url, l, sb.toString()));
 	}
 
 	class HttpPost implements Runnable {
@@ -121,16 +124,17 @@ public class HttpUtils {
 				urlConnection.setDoInput(true);
 				urlConnection.setRequestMethod("POST");
 				urlConnection.setUseCaches(false);
-
-				if (postData.length() > 512)
+				if (postData != null && postData.length() > 512)
 					urlConnection.setChunkedStreamingMode(5);
 				urlConnection.connect();
 
-				OutputStreamWriter osw = new OutputStreamWriter(
-						urlConnection.getOutputStream(), "UTF-8");
-				osw.write(postData);
-				osw.flush();
-				osw.close();
+				if (postData != null) {
+					OutputStreamWriter osw = new OutputStreamWriter(
+							urlConnection.getOutputStream(), "UTF-8");
+					osw.write(postData);
+					osw.flush();
+					osw.close();
+				}
 
 				InputStream in = urlConnection.getInputStream();
 				BufferedReader br = new BufferedReader(
