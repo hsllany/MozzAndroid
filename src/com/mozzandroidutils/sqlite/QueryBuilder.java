@@ -78,17 +78,79 @@ public class QueryBuilder {
 
 	public List<Model> get(Class<? extends Model> clazz)
 			throws IllegalAccessException {
-		Cursor cursor = build();
+		Cursor cursor = null;
+		Model model = null;
 		List<Model> result = new ArrayList<Model>();
-		if (cursor == null) {
-			throw new IllegalAccessException(
-					"result has been cosumed, please do a query again.");
+
+		try {
+			cursor = build();
+			if (cursor == null) {
+				throw new IllegalAccessException(
+						"result has been cosumed, please do a query again.");
+			}
+
+			if (cursor.moveToFirst()) {
+
+				do {
+					model = (Model) ObjectGenerator.newObject(clazz);
+					int length = cursor.getColumnCount();
+
+					for (int i = 0; i < length; i++) {
+						String columnName = cursor.getColumnName(i);
+
+						ColumnType type = mColumns.get(columnName);
+						switch (type) {
+						case TYPE_INTEGER:
+							model.set(columnName, cursor.getInt(i));
+							break;
+						case TYPE_BLOB:
+							model.set(columnName,
+									ObjectByte.toObject(cursor.getBlob(i)));
+							break;
+						case TYPE_TEXT:
+							model.set(columnName, cursor.getString(i));
+							break;
+						case TYPE_REAL:
+							model.set(columnName, cursor.getDouble(i));
+							break;
+						}
+
+					}
+					result.add(model);
+				} while (cursor.moveToNext());
+			}
+		} finally {
+			closeCursor(cursor);
 		}
 
-		if (cursor.moveToFirst()) {
+		return result;
+	}
 
-			do {
-				Model model = (Model) ObjectGenerator.newObject(clazz);
+	public Cursor cursor() throws IllegalAccessException {
+		Cursor cursor = build();
+
+		if (cursor == null)
+			throw new IllegalAccessException(
+					"result has been cosumed, please do a query again.");
+
+		return cursor;
+	}
+
+	public Model first(Class<? extends Model> clazz)
+			throws IllegalAccessException {
+		Cursor cursor = null;
+		Model model = null;
+
+		try {
+			cursor = build();
+
+			if (cursor == null) {
+				throw new IllegalAccessException(
+						"result has been cosumed, please do a query again.");
+			}
+
+			if (cursor.moveToFirst()) {
+				model = (Model) ObjectGenerator.newObject(clazz);
 				int length = cursor.getColumnCount();
 
 				for (int i = 0; i < length; i++) {
@@ -110,80 +172,33 @@ public class QueryBuilder {
 						model.set(columnName, cursor.getDouble(i));
 						break;
 					}
-
-				}
-				result.add(model);
-			} while (cursor.moveToNext());
-		}
-
-		closeCursor(cursor);
-
-		return result;
-	}
-
-	public Cursor cursor() throws IllegalAccessException {
-		Cursor cursor = build();
-
-		if (cursor == null)
-			throw new IllegalAccessException(
-					"result has been cosumed, please do a query again.");
-
-		return cursor;
-	}
-
-	public Model first(Class<? extends Model> clazz)
-			throws IllegalAccessException {
-		Cursor cursor = build();
-
-		if (cursor == null) {
-			throw new IllegalAccessException(
-					"result has been cosumed, please do a query again.");
-		}
-
-		if (cursor.moveToFirst()) {
-			Model model = (Model) ObjectGenerator.newObject(clazz);
-			int length = cursor.getColumnCount();
-
-			for (int i = 0; i < length; i++) {
-				String columnName = cursor.getColumnName(i);
-
-				ColumnType type = mColumns.get(columnName);
-				switch (type) {
-				case TYPE_INTEGER:
-					model.set(columnName, cursor.getInt(i));
-					break;
-				case TYPE_BLOB:
-					model.set(columnName,
-							ObjectByte.toObject(cursor.getBlob(i)));
-					break;
-				case TYPE_TEXT:
-					model.set(columnName, cursor.getString(i));
-					break;
-				case TYPE_REAL:
-					model.set(columnName, cursor.getDouble(i));
-					break;
 				}
 			}
+		} finally {
 			closeCursor(cursor);
-			return model;
-		} else {
-			closeCursor(cursor);
-			return null;
 		}
+
+		return model;
 
 	}
 
 	int count() throws IllegalAccessException {
-		Cursor cursor = buildCount();
-
-		if (cursor == null) {
-			throw new IllegalAccessException(
-					"result has been cosumed, please do a query again.");
-		}
+		Cursor cursor = null;
 		int count = 0;
-		if (cursor.moveToFirst())
-			count = cursor.getInt(1);
-		closeCursor(cursor);
+
+		try {
+			cursor = buildCount();
+
+			if (cursor == null) {
+				throw new IllegalAccessException(
+						"result has been cosumed, please do a query again.");
+			}
+
+			if (cursor.moveToFirst())
+				count = cursor.getInt(1);
+		} finally {
+			closeCursor(cursor);
+		}
 
 		return count;
 	}

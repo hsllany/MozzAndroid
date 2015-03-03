@@ -50,23 +50,16 @@ public class MozzDB {
 	}
 
 	static void close() {
-
 		databaseInstanceNum.decrementAndGet();
-
 		if (databaseInstanceNum.get() == 0) {
 			closeDB();
 		}
 	}
 
 	private static void closeDB() {
-		if (mDatabase != null) {
-			if (mDatabase.isOpen()) {
-				mDatabase.close();
-				mDatabase = null;
-			} else {
-				mDatabase = null;
-			}
-		}
+		if (mDatabase != null && mDatabase.isOpen())
+			mDatabase.close();
+		mDatabase = null;
 	}
 
 	static boolean isDBClosed() {

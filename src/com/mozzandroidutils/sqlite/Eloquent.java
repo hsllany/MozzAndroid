@@ -196,52 +196,57 @@ public abstract class Eloquent {
 
 		if (mTableExist) {
 
-			Cursor cursor = mDatabase.rawQuery("SELECT * FROM " + mTableName
-					+ " WHERE " + ID_COLUMN + " = " + id, null);
+			Cursor cursor = null;
+			Model model = null;
+			try {
+				cursor = mDatabase.rawQuery("SELECT * FROM " + mTableName
+						+ " WHERE " + ID_COLUMN + " = " + id, null);
+				if (cursor.moveToFirst()) {
 
-			if (cursor.moveToFirst()) {
+					model = (Model) ObjectGenerator.newObject(mModelClass);
 
-				Model model = (Model) ObjectGenerator.newObject(mModelClass);
+					int columnCount = cursor.getColumnCount();
 
-				int columnCount = cursor.getColumnCount();
+					for (int i = 0; i < columnCount; i++) {
+						String columnName = cursor.getColumnName(i);
+						int columnType = cursor.getType(cursor
+								.getColumnIndex(columnName));
 
-				for (int i = 0; i < columnCount; i++) {
-					String columnName = cursor.getColumnName(i);
-					int columnType = cursor.getType(cursor
-							.getColumnIndex(columnName));
+						switch (columnType) {
+						case Cursor.FIELD_TYPE_INTEGER:
+							setField(model, columnName, cursor.getInt(cursor
+									.getColumnIndex(columnName)));
+							break;
 
-					switch (columnType) {
-					case Cursor.FIELD_TYPE_INTEGER:
-						setField(model, columnName, cursor.getInt(cursor
-								.getColumnIndex(columnName)));
-						break;
+						case Cursor.FIELD_TYPE_BLOB:
+							Object obj = ObjectByte
+									.toObject(cursor.getBlob(cursor
+											.getColumnIndex(columnName)));
+							setField(model, columnName, obj);
+							break;
 
-					case Cursor.FIELD_TYPE_BLOB:
-						Object obj = ObjectByte.toObject(cursor.getBlob(cursor
-								.getColumnIndex(columnName)));
-						setField(model, columnName, obj);
-						break;
+						case Cursor.FIELD_TYPE_FLOAT:
+							setField(model, columnName, cursor.getFloat(cursor
+									.getColumnIndex(columnName)));
+							break;
 
-					case Cursor.FIELD_TYPE_FLOAT:
-						setField(model, columnName, cursor.getFloat(cursor
-								.getColumnIndex(columnName)));
-						break;
+						case Cursor.FIELD_TYPE_STRING:
+							setField(model, columnName, cursor.getString(cursor
+									.getColumnIndex(columnName)));
+							break;
 
-					case Cursor.FIELD_TYPE_STRING:
-						setField(model, columnName, cursor.getString(cursor
-								.getColumnIndex(columnName)));
-						break;
-
-					case Cursor.FIELD_TYPE_NULL:
-						setField(model, columnName, null);
-						break;
+						case Cursor.FIELD_TYPE_NULL:
+							setField(model, columnName, null);
+							break;
+						}
 					}
+					model.setId(id);
 				}
-				model.setId(id);
-				return model;
+			} finally {
+				closeCursor(cursor);
 			}
 
-			return null;
+			return model;
 
 		} else {
 			return null;
@@ -292,20 +297,23 @@ public abstract class Eloquent {
 			boolean insertMode = true;
 			if (model.hasSetId()) {
 				Cursor cursor = null;
-				synchronized (mDatabase) {
-					cursor = mDatabase.rawQuery("SELECT * FROM " + mTableName
-							+ " WHERE " + ID_COLUMN + " = " + model.id(), null);
+				try {
+					synchronized (mDatabase) {
+						cursor = mDatabase.rawQuery("SELECT * FROM "
+								+ mTableName + " WHERE " + ID_COLUMN + " = "
+								+ model.id(), null);
+					}
+
+					if (cursor.moveToFirst()) {
+						int countId = cursor.getInt(0);
+
+						if (countId > 0)
+							insertMode = false;
+					}
+
+				} finally {
+					closeCursor(cursor);
 				}
-
-				if (cursor.moveToFirst()) {
-					int countId = cursor.getInt(0);
-
-					if (countId > 0)
-						insertMode = false;
-				}
-
-				if (cursor != null)
-					cursor.close();
 			}
 
 			if (insertMode) {
@@ -435,20 +443,21 @@ public abstract class Eloquent {
 
 	private void checkTableExistAndColumn() {
 		Cursor cursor = null;
-		synchronized (mDatabase) {
-			cursor = mDatabase.rawQuery(
-					"SELECT sql FROM sqlite_master WHERE type = 'table' AND name = '"
-							+ mTableName + "';", null);
+		try {
+			synchronized (mDatabase) {
+				cursor = mDatabase.rawQuery(
+						"SELECT sql FROM sqlite_master WHERE type = 'table' AND name = '"
+								+ mTableName + "';", null);
+			}
+			if (cursor.moveToFirst()) {
+				mTableExist = true;
+				mColumn.clear();
+				String createSQL = cursor.getString(0);
+				mColumn = createSQLParser(createSQL);
+			}
+		} finally {
+			closeCursor(cursor);
 		}
-		if (cursor.moveToFirst()) {
-			mTableExist = true;
-			mColumn.clear();
-			String createSQL = cursor.getString(0);
-			mColumn = createSQLParser(createSQL);
-		}
-
-		if (cursor != null)
-			cursor.close();
 
 	}
 
@@ -562,7 +571,7 @@ public abstract class Eloquent {
 	 */
 	public void close() {
 		if (mReadOnly) {
-			if (mDatabase != null && !mDatabase.isOpen())
+			if (mDatabase != null && mDatabase.isOpen())
 				mDatabase.close();
 
 			mDatabase = null;
@@ -618,9 +627,14 @@ public abstract class Eloquent {
 		return columnTypes;
 	}
 
+	private void closeCursor(Cursor cursor) {
+		if (cursor != null)
+			cursor.close();
+		cursor = null;
+	}
+
 	protected String mTableName = null;
 	private SQLiteDatabase mDatabase;
-
 	private QueryBuilder mQueryBuilder;
 
 	private Map<String, ColumnType> mColumn = new HashMap<String, ColumnType>();
@@ -630,6 +644,5 @@ public abstract class Eloquent {
 	// for insertion
 	private Map<String, Integer> mColumnOrder = null;
 	private SQLiteStatement mInsertStatement = null;
-
 	private Class<? extends Model> mModelClass = null;
 }
