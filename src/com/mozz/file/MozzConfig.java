@@ -1,4 +1,4 @@
-package com.mozzandroidutils.file;
+package com.mozz.file;
 
 import java.io.File;
 

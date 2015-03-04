@@ -1,11 +1,11 @@
-package com.mozzandroidutils.sqlite;
+package com.mozz.sqlite;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 
-import com.mozzandroidutils.file.MozzConfig;
+import com.mozz.file.MozzConfig;
 
 public class MozzDB {
 	private static SQLiteDatabase mDatabase;

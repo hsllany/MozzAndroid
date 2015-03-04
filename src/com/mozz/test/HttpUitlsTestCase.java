@@ -3,9 +3,9 @@ package com.mozz.test;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
-import com.mozzandroidutils.http.HttpListener;
-import com.mozzandroidutils.http.HttpResponse;
-import com.mozzandroidutils.http.HttpUtils;
+import com.mozz.http.HttpListener;
+import com.mozz.http.HttpResponse;
+import com.mozz.http.HttpUtils;
 
 public class HttpUitlsTestCase extends AndroidTestCase {
 	private static final String Tag = "HttpUitlsTestCase";

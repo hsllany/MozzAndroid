@@ -1,4 +1,4 @@
-package com.mozzandroidutils.http;
+package com.mozz.http;
 
 public class HttpResponse {
 	private String mEntity;

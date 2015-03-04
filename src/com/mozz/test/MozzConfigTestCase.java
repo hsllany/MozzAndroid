@@ -3,7 +3,7 @@ package com.mozz.test;
 import android.content.Context;
 import android.test.AndroidTestCase;
 
-import com.mozzandroidutils.file.MozzConfig;
+import com.mozz.file.MozzConfig;
 
 public class MozzConfigTestCase extends AndroidTestCase {
 	private static final String Tag = "MozzConfigTestCase";

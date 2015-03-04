@@ -1,4 +1,4 @@
-package com.mozzandroidutils.http;
+package com.mozz.http;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -195,7 +195,7 @@ public class HttpUtils {
 				BufferedReader br = new BufferedReader(
 						new InputStreamReader(in));
 
-				String line = "";
+				String line = null;
 				while ((line = br.readLine()) != null) {
 					sb.append(line);
 				}

@@ -1,4 +1,4 @@
-package com.mozzandroidutils.sqlite;
+package com.mozz.sqlite;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;

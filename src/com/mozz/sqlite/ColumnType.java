@@ -1,4 +1,4 @@
-package com.mozzandroidutils.sqlite;
+package com.mozz.sqlite;
 
 public enum ColumnType {
 

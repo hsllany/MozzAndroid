@@ -1,4 +1,4 @@
-package com.mozzandroidutils.sqlite;
+package com.mozz.sqlite;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,7 +8,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
-import com.mozzandroidutils.file.ObjectByte;
+import com.mozz.file.ObjectByte;
 
 public class QueryBuilder {
 	private final String DEBUG_TAG = this.getClass().getSimpleName();

@@ -1,7 +1,7 @@
 package com.mozz.test;
 
-import com.mozzandroidutils.sqlite.Ingnore;
-import com.mozzandroidutils.sqlite.Model;
+import com.mozz.sqlite.Ingnore;
+import com.mozz.sqlite.Model;
 
 public class Student extends Model {
 

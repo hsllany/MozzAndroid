@@ -1,5 +1,7 @@
-package com.mozzandroidutils.sqlite;
+package com.mozz.sqlite;
 
+import java.io.NotSerializableException;
+import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -16,7 +18,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteStatement;
 import android.util.Log;
 
-import com.mozzandroidutils.file.ObjectByte;
+import com.mozz.file.ObjectByte;
 
 /**
  * Represent the table in the database.
@@ -274,7 +276,7 @@ public abstract class Eloquent {
 	}
 
 	public boolean insertMany(Collection<? extends Model> modelList)
-			throws IllegalArgumentException {
+			throws Exception {
 
 		mDatabase.beginTransaction();
 		try {
@@ -291,7 +293,7 @@ public abstract class Eloquent {
 		return false;
 	}
 
-	public boolean insertMany(Model[] modelList) {
+	public boolean insertMany(Model[] modelList) throws Exception {
 		mDatabase.beginTransaction();
 		try {
 			for (int i = 0; i < modelList.length; i++) {
@@ -308,7 +310,7 @@ public abstract class Eloquent {
 		return false;
 	}
 
-	public boolean save(Model model) {
+	public boolean save(Model model) throws NotSerializableException {
 
 		if (mTableExist) {
 			if (mReadOnly)
@@ -375,12 +377,17 @@ public abstract class Eloquent {
 							ColumnType type = mColumn.get(fieldName);
 
 							if (type == ColumnType.TYPE_BLOB) {
-								sb.append(fieldName + "=");
-								byte[] valueByte = ObjectByte
-										.toByteArray(value);
+								if (value instanceof Serializable) {
+									sb.append(fieldName + "=");
+									byte[] valueByte = ObjectByte
+											.toByteArray((Serializable) value);
 
-								for (int j = 0; j < valueByte.length; j++) {
-									sb.append(valueByte[j]);
+									for (int j = 0; j < valueByte.length; j++) {
+										sb.append(valueByte[j]);
+									}
+								} else {
+									throw new NotSerializableException(
+											"blob object must be serializable");
 								}
 
 							} else {
@@ -525,7 +532,7 @@ public abstract class Eloquent {
 	 * @throws IllegalArgumentException
 	 */
 	private long insertUsingStatement(Model model)
-			throws IllegalArgumentException {
+			throws IllegalArgumentException, NotSerializableException {
 
 		buildInsertAndColumnOrder();
 
@@ -571,8 +578,13 @@ public abstract class Eloquent {
 					mInsertStatement.bindString(order, value.toString());
 					break;
 				case TYPE_BLOB:
-					mInsertStatement.bindBlob(order,
-							ObjectByte.toByteArray(value));
+					if (value instanceof Serializable)
+						mInsertStatement.bindBlob(order,
+								ObjectByte.toByteArray((Serializable) value));
+					else {
+						throw new NotSerializableException(model.id()
+								+ " blob must be serializable");
+					}
 					break;
 				}
 			} catch (IllegalAccessException e) {
