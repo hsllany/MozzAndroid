@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.mozzandroidutils.test"
+    package="com.mozz.test"
     android:versionCode="1"
     android:versionName="1.0" >
 
@@ -27,8 +27,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name="com.mozz.test.TestActivity" >
-        </activity>
 
         <meta-data
             android:name="YD_APP_DIR"
@@ -36,6 +34,13 @@
         <meta-data
             android:name="YD_DB_NAME"
             android:value="YD" />
+
+        <uses-library android:name="android.test.runner" />
     </application>
+
+    <instrumentation
+        android:name="android.test.InstrumentationTestRunner"
+        android:label="Mozz Test"
+        android:targetPackage="com.mozz.test" />
 
 </manifest>

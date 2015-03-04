@@ -8,6 +8,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Bundle;
+import android.telephony.TelephonyManager;
 
 public class MozzConfig {
 	/**
@@ -33,6 +34,13 @@ public class MozzConfig {
 		File file = new File(getAppAbsoluteDir(context));
 		if (!file.exists())
 			file.mkdirs();
+		File cacheFile = new File(getAppAbsoluteDir(context) + "/cache");
+		if (!cacheFile.exists())
+			cacheFile.mkdirs();
+		File updateFile = new File(getAppAbsoluteDir(context) + "/update");
+		if (!updateFile.exists())
+			updateFile.mkdirs();
+
 	}
 
 	/**
@@ -81,7 +89,7 @@ public class MozzConfig {
 			return pi.versionCode;
 		} catch (NameNotFoundException e) {
 			e.printStackTrace();
-			return 0;
+			return -1;
 		}
 	}
 
@@ -92,8 +100,14 @@ public class MozzConfig {
 			return pi.versionName;
 		} catch (NameNotFoundException e) {
 			e.printStackTrace();
-			return "";
+			return null;
 		}
+	}
+
+	public static String getDeviceId(Context context) {
+		final TelephonyManager manager = (TelephonyManager) context
+				.getSystemService(Context.TELEPHONY_SERVICE);
+		return manager.getDeviceId();
 	}
 
 }
