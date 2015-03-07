@@ -5,6 +5,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.io.Serializable;
+import java.lang.ref.SoftReference;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import android.content.Context;
 import android.os.AsyncTask;
@@ -14,43 +18,65 @@ import com.mozz.file.ObjectByte;
 
 public class FileCache implements Cache {
 
-	private final static long DEFAULT_KEEP_TIME = 60000;
+	private static FileCache mCache;
+
+	public static FileCache instance(Context context) {
+		if (mCache == null)
+			mCache = new FileCache(context);
+
+		return mCache;
+	}
+
+	private Map<String, SoftReference<File>> mFileList = Collections
+			.synchronizedMap(new HashMap<String, SoftReference<File>>());
 
 	private File mCacheDir;
 	private Context mContext;
 
-	public FileCache(Context context, String path) {
+	private FileCache(Context context) {
 		mContext = context;
-		if (path == null)
-			throw new IllegalArgumentException("path cannot be null");
-
-		mCacheDir = new File(path);
-
-		if (!mCacheDir.exists())
-			mCacheDir.mkdir();
-	}
-
-	public FileCache(Context context) {
-		mContext = context;
-
-		mCacheDir = new File(MozzConfig.getAppAbsoluteDir(context) + "/cache");
 		MozzConfig.makeAppDirs(mContext);
+		mCacheDir = new File(MozzConfig.getAppAbsoluteDir(context) + "/cache");
 	}
 
 	@Override
-	public void get(String key, GetCallback callback) {
-		new GetAsynTask(key, callback).execute();
-	}
+	public void getOrExpire(String key, GetCallback callback) {
+		new GetAsynTask(key, callback, -1).execute();
 
-	public void put(String key, Serializable item, PutCallback callback) {
-		put(key, item, DEFAULT_KEEP_TIME, callback);
 	}
 
 	@Override
-	public void put(String key, Serializable item, long duration,
+	public void getOrOldversion(String key, long newVersion,
+			GetCallback callback) {
+		new GetAsynTask(key, callback, newVersion).execute();
+	}
+
+	@Override
+	public void putWithExpireTime(String key, Serializable item, long duration,
 			PutCallback callback) {
-		new PutAsynTask(item, key, duration, callback).execute();
+		ObjectTimeWrapper wrapper = new ObjectTimeWrapper(item,
+				CacheStratigy.Cache_Expire);
+		try {
+			wrapper.setExpireTime(System.currentTimeMillis() + duration);
+			new PutAsynTask(wrapper, key, callback).execute();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
 	}
+
+	@Override
+	public void putWithVersion(String key, Serializable item, long version,
+			PutCallback callback) {
+		ObjectTimeWrapper wrapper = new ObjectTimeWrapper(item,
+				CacheStratigy.Cache_Version);
+		try {
+			wrapper.setVersion(version);
+			new PutAsynTask(wrapper, key, callback).execute();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	};
 
 	@Override
 	public void clear() {
@@ -58,15 +84,41 @@ public class FileCache implements Cache {
 		for (File file : files) {
 			file.delete();
 		}
+
+		mFileList.clear();
+	}
+
+	private File getFile(String key) {
+		SoftReference<File> softReference = mFileList.get(key);
+		if (softReference != null) {
+			File file = softReference.get();
+			if (file != null) {
+				return file;
+			} else {
+				mFileList.remove(key);
+			}
+		}
+
+		File file = new File(mCacheDir, key.hashCode() + "");
+		SoftReference<File> softRef = new SoftReference<File>(file);
+		mFileList.put(key, softRef);
+
+		return file;
 	}
 
 	@Override
 	public boolean remove(String key) {
-		File file = new File(mCacheDir, key.hashCode() + "");
-		return file.delete();
+		File file = getFile(key);
+		boolean deleteDone = false;
+		synchronized (file) {
+			deleteDone = file.delete();
+		}
+		if (deleteDone)
+			mFileList.remove(key);
+		return deleteDone;
 	}
 
-	private static byte[] inputStreamFromFile(File file) {
+	private byte[] readFromFile(File file) {
 		RandomAccessFile randomFile = null;
 		try {
 			if (!file.exists())
@@ -89,32 +141,20 @@ public class FileCache implements Cache {
 		}
 	}
 
-	private class PutAsynTask extends AsyncTask<Void, Void, Void> {
-		private Serializable mObject;
-		private long mExpireTime;
-		private String mKey;
-		private PutCallback mCallback;
-		private Exception mException;
+	private void writeIntoFile(Serializable object, File file) throws Exception {
+		FileOutputStream out = null;
 
-		public PutAsynTask(Serializable object, String key, long duration,
-				PutCallback callback) {
-			mObject = object;
-			mExpireTime = duration + System.currentTimeMillis();
-			mCallback = callback;
-			mKey = key;
-		}
+		if (file == null || object == null)
+			throw new NullPointerException("file/object can't be null");
 
-		@Override
-		protected Void doInBackground(Void... arg0) {
-			File file = new File(mCacheDir, mKey.hashCode() + "");
-			FileOutputStream out = null;
+		synchronized (file) {
 			try {
+				file.createNewFile();
 				out = new FileOutputStream(file);
-				out.write(ObjectByte.toByteArray(new ObjectTimeWrapper(mObject,
-						mExpireTime)));
+				out.write(ObjectByte.toByteArray(object));
 			} catch (Exception e) {
-				mException = e;
 				e.printStackTrace();
+				throw e;
 			} finally {
 				if (out != null) {
 					try {
@@ -122,9 +162,34 @@ public class FileCache implements Cache {
 						out.close();
 					} catch (IOException e) {
 						e.printStackTrace();
-						mException = e;
 					}
 				}
+			}
+		}
+	}
+
+	private class PutAsynTask extends AsyncTask<Void, Void, Void> {
+		private Serializable mObject;
+		private String mKey;
+		private PutCallback mCallback;
+		private Exception mException;
+
+		public PutAsynTask(ObjectTimeWrapper object, String key,
+				PutCallback callback) {
+			mObject = object;
+			mObject = object;
+			mCallback = callback;
+			mKey = key;
+		}
+
+		@Override
+		protected Void doInBackground(Void... arg0) {
+			File file = getFile(mKey);
+			try {
+				writeIntoFile(mObject, file);
+			} catch (Exception e) {
+				e.printStackTrace();
+				mException = e;
 			}
 			return null;
 		}
@@ -142,34 +207,48 @@ public class FileCache implements Cache {
 		private String mKey;
 		private GetCallback mCallback;
 		private Exception mException;
+		private long mNewversion;
 
-		public GetAsynTask(String key, GetCallback callback) {
+		public GetAsynTask(String key, GetCallback callback, long newVersion) {
 			mCallback = callback;
 			mKey = key;
 		}
 
 		@Override
 		protected Object doInBackground(Void... arg0) {
-			File file = new File(mCacheDir, mKey.hashCode() + "");
+			File file = getFile(mKey);
 
-			if (!file.exists()) {
-				return null;
+			byte[] objectBinary = readFromFile(file);
+			Object object = ObjectByte.toObject(objectBinary);
 
-			} else {
-				byte[] objectBinary = inputStreamFromFile(file);
-				Object object = ObjectByte.toObject(objectBinary);
+			if (object instanceof ObjectTimeWrapper) {
+				ObjectTimeWrapper wrapper = (ObjectTimeWrapper) object;
 
-				if (object instanceof ObjectTimeWrapper) {
-					if (((ObjectTimeWrapper) object).expireTime() > System
-							.currentTimeMillis()) {
-						file.delete();
+				switch (wrapper.cacheStratigy()) {
+				case Cache_Expire:
+					if (wrapper.expireTime() > System.currentTimeMillis()) {
+						synchronized (file) {
+							file.delete();
+							mFileList.remove(mKey);
+						}
 						return null;
 					} else {
 						return ((ObjectTimeWrapper) object).object();
 					}
-				} else {
-					mException = new IllegalAccessException("put wrong");
+				case Cache_Version:
+					if (wrapper.version() >= mNewversion) {
+						return wrapper.object();
+					} else {
+						synchronized (file) {
+							file.delete();
+							mFileList.remove(mKey);
+						}
+						return null;
+					}
 				}
+
+			} else {
+				mException = new IllegalAccessException("put wrong");
 			}
 
 			return null;
@@ -187,25 +266,53 @@ public class FileCache implements Cache {
 	class ObjectTimeWrapper implements Serializable {
 		private static final long serialVersionUID = 1L;
 
-		ObjectTimeWrapper(Serializable obj, long expireTime) {
-			mObject = obj;
-			mExpireTime = expireTime;
-		}
-
-		private long mExpireTime;
+		private long mExpireTime = -1;
 		private final Serializable mObject;
+		private long mVersion = -1;
+		private final CacheStratigy mCacheStratigy;
+
+		ObjectTimeWrapper(Serializable obj, CacheStratigy cacheStratigy) {
+			mObject = obj;
+			mCacheStratigy = cacheStratigy;
+		}
 
 		public Object object() {
 			return mObject;
+		}
+
+		public CacheStratigy cacheStratigy() {
+			return mCacheStratigy;
 		}
 
 		public long expireTime() {
 			return mExpireTime;
 		}
 
-		public void setExpireTime(long expireTime) {
-			mExpireTime = expireTime;
+		public long version() {
+			return mVersion;
 		}
+
+		public void setExpireTime(long expireTime) throws Exception {
+			if (mCacheStratigy == CacheStratigy.Cache_Expire) {
+				mExpireTime = expireTime;
+			} else {
+				throw new Exception(
+						"cache stratigy is Cache_Version, can't set expireTime");
+			}
+		}
+
+		public void setVersion(long version) throws Exception {
+			if (mCacheStratigy == CacheStratigy.Cache_Version) {
+				mVersion = version;
+			} else {
+				throw new Exception(
+						"cache stratigy is Cache_Version, can't set expireTime");
+			}
+		}
+	}
+
+	enum CacheStratigy {
+		Cache_Expire, Cache_Version
 	}
 
 }
