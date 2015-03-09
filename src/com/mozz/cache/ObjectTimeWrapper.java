@@ -12,7 +12,7 @@ public class ObjectTimeWrapper implements Serializable {
 	private long mVersion = -1;
 	private final CacheStratigy mCacheStratigy;
 
-	public ObjectTimeWrapper(Serializable obj, CacheStratigy cacheStratigy) {
+	ObjectTimeWrapper(Serializable obj, CacheStratigy cacheStratigy) {
 		mObject = obj;
 		mCacheStratigy = cacheStratigy;
 	}

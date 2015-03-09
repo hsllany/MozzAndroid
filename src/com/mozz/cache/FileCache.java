@@ -263,7 +263,7 @@ public class FileCache implements Cache {
 		}
 	}
 
-	public enum CacheStratigy {
+	enum CacheStratigy {
 		Cache_Expire, Cache_Version
 	}
 

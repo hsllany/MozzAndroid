@@ -6,26 +6,56 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
 
-import com.mozz.cache.FileCache.CacheStratigy;
-import com.mozz.cache.ObjectTimeWrapper;
-import com.mozz.file.ObjectByte;
+import com.mozz.cache.FileCache;
+import com.mozz.cache.GetCallback;
+import com.mozz.cache.PutCallback;
 
 public class MainActivity extends Activity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		Tst test = new Tst();
-		ObjectTimeWrapper wrapper = new ObjectTimeWrapper(test,
-				CacheStratigy.Cache_Expire);
-		byte[] a = ObjectByte.toByteArray(wrapper);
+		Player test = new Player();
+		FileCache cache = FileCache.instance(this);
+
+		cache.putWithExpireTime("he", test, 3000, new PutCallback() {
+
+			@Override
+			public void onSuccess() {
+				Log.d("CACHE", "success");
+
+			}
+
+			@Override
+			public void onFail() {
+				Log.d("CACHE", "fail");
+
+			}
+		});
+		
+		try {
+			Thread.sleep(1000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 
 		Log.d("MOZZ", "hell ow");
+
+		cache.getOrExpire("he", new GetCallback() {
+
+			@Override
+			public void onSuccess(Object item) {
+				Log.d("CACHE", "GET" + item.getClass() + ","
+						+ ((Player) (item)).id);
+
+			}
+
+			@Override
+			public void onFail() {
+				Log.d("CACHE", "£ç£å£ô¡¡fail");
+
+			}
+		});
 	}
 
-	class Tst implements Serializable {
-		private static final long serialVersionUID = 1L;
-
-		int id = 3;
-	}
 
 }
