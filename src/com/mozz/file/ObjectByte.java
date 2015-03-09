@@ -19,7 +19,7 @@ public final class ObjectByte {
 		try {
 			bos = new ByteArrayOutputStream();
 			oos = new ObjectOutputStream(bos);
-			oos.writeObject(obj);
+			oos.writeObject("Today");
 			oos.flush();
 			bytes = bos.toByteArray();
 		} catch (IOException ex) {
