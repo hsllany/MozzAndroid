@@ -5,7 +5,7 @@ import org.json.JSONObject;
 
 import android.content.Context;
 
-import com.mozz.file.MozzConfig;
+import com.mozz.utils.MozzConfig;
 
 public class Upgrader {
 

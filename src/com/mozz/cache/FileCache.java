@@ -14,8 +14,8 @@ import android.content.Context;
 import android.os.AsyncTask;
 import android.util.Log;
 
-import com.mozz.file.MozzConfig;
-import com.mozz.file.ObjectByte;
+import com.mozz.utils.MozzConfig;
+import com.mozz.utils.ObjectByte;
 
 public class FileCache implements Cache {
 

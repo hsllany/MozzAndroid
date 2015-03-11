@@ -1,4 +1,4 @@
-package com.mozz.file;
+package com.mozz.utils;
 
 import java.io.File;
 

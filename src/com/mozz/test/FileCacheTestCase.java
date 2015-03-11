@@ -5,7 +5,7 @@ import java.io.Serializable;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
-import com.mozz.file.ObjectByte;
+import com.mozz.utils.ObjectByte;
 
 public class FileCacheTestCase extends AndroidTestCase {
 	private static final String TAG = "FileCacheTestCase";

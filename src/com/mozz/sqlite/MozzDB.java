@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 
-import com.mozz.file.MozzConfig;
+import com.mozz.utils.MozzConfig;
 
 public class MozzDB {
 	private static SQLiteDatabase mDatabase;

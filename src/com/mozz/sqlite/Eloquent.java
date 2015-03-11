@@ -18,7 +18,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteStatement;
 import android.util.Log;
 
-import com.mozz.file.ObjectByte;
+import com.mozz.utils.ObjectByte;
 
 /**
  * Represent the table in the database.

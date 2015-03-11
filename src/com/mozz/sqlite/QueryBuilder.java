@@ -8,7 +8,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
-import com.mozz.file.ObjectByte;
+import com.mozz.utils.ObjectByte;
 
 public class QueryBuilder {
 	private final String DEBUG_TAG = this.getClass().getSimpleName();
