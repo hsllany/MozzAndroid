@@ -26,7 +26,8 @@ public class MozzConfig {
 	 * @return AppDir, String
 	 */
 	public static String getAppAbsoluteDir(Context context) {
-		return SDCard.sdCardDir() + (String) getMetaData(context, "YD_APP_DIR")
+		return SDCard.sdCardDir()
+				+ (String) getMetaData(context, "MOZZ_APP_DIR")
 				+ File.separator;
 	}
 
@@ -60,7 +61,7 @@ public class MozzConfig {
 	 * @return AppDir, String
 	 */
 	public static String getDBDir(Context context) {
-		return (String) getMetaData(context, "YD_DB_NAME");
+		return (String) getMetaData(context, "MOZZ_DB_NAME");
 	}
 
 	private static Object getMetaData(Context context, String key) {

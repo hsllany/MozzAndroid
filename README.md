@@ -301,3 +301,73 @@ try {
 			e.printStackTrace();
 		}
 ```
+
+MozzCache
+------------------
+
+缓存可以提高应用的速度，并减少网络请求。Mozz提供2种缓存机制，版本号缓存及Expire Time缓存。
+
+```java
+//获取缓存对象
+FileCache cache = FileCache.instance(this);
+Player playerToCache = new Player();
+//将Serializable对象（必须实现Serializable接口）存入缓存，
+//以版本号机制存入，取时用新版本号取，若新版本号小于等于缓存版本号，则能取到相关数据；否则null
+cache.putWithVersion("cacheKey", playerToCache, 1L, new PutCallback() {
+	@Override
+	public void onSuccess() {
+		Log.d("CACHE", "success");
+	}
+
+	@Override
+	public void onFail() {
+		Log.d("CACHE", "fail");
+	}
+});
+
+//以ExpireTime机制存入，5秒后过期
+cache.putWithExpireTime("cacheKey2", playerToCache, 5000, new PutCallback() {
+	@Override
+	public void onSuccess() {
+		Log.d("CACHE", "success");
+	}
+
+	@Override
+	public void onFail() {
+		Log.d("CACHE", "fail");
+	}
+});
+
+//取缓存
+cache.getOrOldversion("cacheKey", 2L, new GetCallback() {
+	@Override
+	public void onSuccess(Object item) {
+		if (item != null) {
+			Log.d("CACHE", "get same version" + ((Player) item).mId);
+		} else {
+			Log.d("CACHE", "version too old");
+		}
+	}
+
+	@Override
+	public void onFail() {
+		Log.d("CACHE", "failed");
+	}
+});
+
+cache.getOrExpired("cacheKey2", new GetCallback() {
+	@Override
+	public void onSuccess(Object item) {
+		if (item != null) {
+			Log.d("CACHE", "get" + ((Player) item).mId);
+		} else {
+			Log.d("CACHE", "expired");
+		}
+	}
+
+	@Override
+	public void onFail() {
+		Log.d("CACHE", "failed");
+	}
+});
+```
