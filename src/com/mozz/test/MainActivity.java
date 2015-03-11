@@ -1,7 +1,5 @@
 package com.mozz.test;
 
-import java.io.Serializable;
-
 import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
@@ -14,10 +12,12 @@ public class MainActivity extends Activity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		Player test = new Player();
+		Player test = new Player(System.currentTimeMillis());
 		FileCache cache = FileCache.instance(this);
 
-		cache.putWithExpireTime("he", test, 3000, new PutCallback() {
+		cache.putWithVersion("haha", test, 1L, null);
+
+		cache.putWithExpireTime("he", test, 5000, new PutCallback() {
 
 			@Override
 			public void onSuccess() {
@@ -31,7 +31,7 @@ public class MainActivity extends Activity {
 
 			}
 		});
-		
+
 		try {
 			Thread.sleep(1000);
 		} catch (InterruptedException e) {
@@ -40,22 +40,23 @@ public class MainActivity extends Activity {
 
 		Log.d("MOZZ", "hell ow");
 
-		cache.getOrExpire("he", new GetCallback() {
+		cache.getOrOldversion("haha", 2L, new GetCallback() {
 
 			@Override
 			public void onSuccess(Object item) {
-				Log.d("CACHE", "GET" + item.getClass() + ","
-						+ ((Player) (item)).id);
+				if (item != null) {
+					Log.d("CACHE", "get" + ((Player) item).mId);
+				} else {
+					Log.d("CACHE", "null");
+				}
 
 			}
 
 			@Override
 			public void onFail() {
-				Log.d("CACHE", "£ç£å£ô¡¡fail");
+				Log.d("CACHE", "failed");
 
 			}
 		});
 	}
-
-
 }

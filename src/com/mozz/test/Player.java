@@ -3,5 +3,9 @@ package com.mozz.test;
 import java.io.Serializable;
 
 public class Player implements Serializable {
-	public int id = 3;
+	public Player(long id) {
+		mId = id;
+	}
+
+	public long mId = 3;
 }
