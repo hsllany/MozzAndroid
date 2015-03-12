@@ -17,7 +17,8 @@ public class MozzConfig {
 	 * 
 	 * <Application android:name=""...
 	 * 
-	 * <meta-data android:name="YD_APP_DIR" android:value="Some dir you set" />
+	 * <meta-data android:name="MOZZ_APP_DIR" android:value="Some dir you set"
+	 * />
 	 * 
 	 * </Application>
 	 * 
@@ -26,13 +27,18 @@ public class MozzConfig {
 	 * @return AppDir, String
 	 */
 	public static String getAppAbsoluteDir(Context context) {
-		return SDCard.sdCardDir()
-				+ (String) getMetaData(context, "MOZZ_APP_DIR")
-				+ File.separator;
+		try {
+			return SDCard.sdCardDir()
+					+ (String) getMetaData(context, "MOZZ_APP_DIR")
+					+ File.separator;
+		} catch (NameNotFoundException e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 
-	public static void makeAppDirs(Context context) {
-		File file = new File(getAppAbsoluteDir(context));
+	public static void makeAppDirs(Context context, String fileDir) {
+		File file = new File(fileDir);
 		if (!file.exists())
 			file.mkdirs();
 		File cacheFile = new File(getAppAbsoluteDir(context) + "/cache");
@@ -41,7 +47,11 @@ public class MozzConfig {
 		File updateFile = new File(getAppAbsoluteDir(context) + "/update");
 		if (!updateFile.exists())
 			updateFile.mkdirs();
+	}
 
+	public static void makeAppDirs(Context context) {
+		String appDir = getAppAbsoluteDir(context);
+		makeAppDirs(context, appDir);
 	}
 
 	/**
@@ -61,11 +71,32 @@ public class MozzConfig {
 	 * @return AppDir, String
 	 */
 	public static String getDBDir(Context context) {
-		return (String) getMetaData(context, "MOZZ_DB_NAME");
+		try {
+			return (String) getMetaData(context, "MOZZ_DB_NAME");
+		} catch (NameNotFoundException e) {
+			e.printStackTrace();
+		}
+
+		return null;
 	}
 
-	private static Object getMetaData(Context context, String key) {
-		Object metaData = null;
+	public static boolean inDebug(Context context) {
+		String debugOpen;
+		try {
+			debugOpen = (String) getMetaData(context, "MOZZ_DEBUG");
+			if (debugOpen.equalsIgnoreCase("true"))
+				return true;
+			return false;
+		} catch (NameNotFoundException e) {
+			e.printStackTrace();
+		}
+
+		return false;
+	}
+
+	private static String getMetaData(Context context, String key)
+			throws NameNotFoundException {
+		String metaData = null;
 
 		try {
 			ApplicationInfo info = context.getPackageManager()
@@ -78,6 +109,7 @@ public class MozzConfig {
 				metaData = (String) bundle.get(key);
 		} catch (NameNotFoundException e) {
 			e.printStackTrace();
+			throw e;
 		}
 
 		return metaData;
@@ -85,9 +117,9 @@ public class MozzConfig {
 
 	public static int getPackageVersionCode(Context context) {
 		try {
-			PackageInfo pi = context.getPackageManager().getPackageInfo(
+			PackageInfo pinfo = context.getPackageManager().getPackageInfo(
 					context.getPackageName(), 0);
-			return pi.versionCode;
+			return pinfo.versionCode;
 		} catch (NameNotFoundException e) {
 			e.printStackTrace();
 			return -1;
@@ -96,9 +128,9 @@ public class MozzConfig {
 
 	public static String getPackageVersionName(Context context) {
 		try {
-			PackageInfo pi = context.getPackageManager().getPackageInfo(
+			PackageInfo pinfo = context.getPackageManager().getPackageInfo(
 					context.getPackageName(), 0);
-			return pi.versionName;
+			return pinfo.versionName;
 		} catch (NameNotFoundException e) {
 			e.printStackTrace();
 			return null;
