@@ -12,24 +12,16 @@ public class MozzDB {
 
 	private static AtomicInteger databaseInstanceNum = new AtomicInteger(0);
 
-	static SQLiteDatabase writebleDatabase(Context context) {
-		return writebleDB(context);
+	static SQLiteDatabase writebleDatabase(Context context, String dbName) {
+		SQLiteDatabase db = writebleDB(context, dbName);
+		databaseInstanceNum.incrementAndGet();
+
+		return db;
 	}
 
-	static SQLiteDatabase readOnlyDatabase(Context context) {
-		String dbName = MozzConfig.getDBDir(context);
-
-		String path = context.getDatabasePath(dbName).getPath();
-
-		SQLiteDatabase database = SQLiteDatabase.openDatabase(path, null,
-				SQLiteDatabase.OPEN_READONLY);
-
-		return database;
-	}
-
-	private static SQLiteDatabase writebleDB(Context context) {
-
-		String dbName = MozzConfig.getDBDir(context);
+	static SQLiteDatabase writebleDB(Context context, String dbName) {
+		if (dbName == null)
+			dbName = MozzConfig.getDBDir(context);
 		if (dbName != null) {
 
 			if (mDatabase != null) {
@@ -43,10 +35,12 @@ public class MozzDB {
 						Context.MODE_ENABLE_WRITE_AHEAD_LOGGING, null, null);
 				mDatabase.enableWriteAheadLogging();
 			}
-			databaseInstanceNum.incrementAndGet();
+
 			return mDatabase;
+		} else {
+			throw new IllegalArgumentException("dbName can't be null");
 		}
-		return null;
+
 	}
 
 	static void close() {

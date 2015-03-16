@@ -2,7 +2,6 @@ package com.mozz.sqlite;
 
 import java.io.NotSerializableException;
 import java.io.Serializable;
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.Collection;
@@ -43,13 +42,13 @@ public abstract class Eloquent {
 	 * @return
 	 */
 	public static boolean create(String tableName, String[] columnNames,
-			ColumnType[] types, Context context) {
+			ColumnType[] types, Context context, String dbName) {
 
 		if (columnNames.length != types.length || columnNames.length == 0
 				|| types.length == 0)
 			return false;
 
-		SQLiteDatabase database = MozzDB.writebleDatabase(context);
+		SQLiteDatabase database = MozzDB.writebleDB(context, dbName);
 		StringBuilder sb = new StringBuilder();
 
 		sb.append("CREATE TABLE IF NOT EXISTS " + tableName.toLowerCase());
@@ -73,7 +72,50 @@ public abstract class Eloquent {
 			database.execSQL(createSQL);
 		}
 
+		MozzDB.close();
+
 		return true;
+	}
+
+	public static void exeSQL(Context context, String dbName, String sql) {
+		SQLiteDatabase database = MozzDB.writebleDB(context, dbName);
+		database.execSQL(sql);
+		MozzDB.close();
+	}
+
+	public static Cursor rawSQL(Context context, String dbName, String sql) {
+		SQLiteDatabase database = MozzDB.writebleDB(context, dbName);
+		Cursor cursor = database.rawQuery(sql, null);
+		return cursor;
+	}
+
+	/**
+	 * 
+	 * @param context
+	 * @param tableName
+	 * @param dbName
+	 */
+	public Eloquent(Context context, String tableName, String dbName) {
+		init(context, tableName, dbName);
+	}
+
+	/**
+	 * 
+	 * @param context
+	 * @param dbName
+	 */
+	public Eloquent(Context context, String dbName) {
+		TableName tableAnotation = getClass().getAnnotation(TableName.class);
+		String tableName = null;
+		if (tableAnotation != null)
+			tableName = tableAnotation.tablename();
+		else {
+			String className = this.getClass().getSimpleName();
+			tableName = className.substring(0, className.indexOf("Eloquent"))
+					.toLowerCase();
+		}
+
+		init(context, tableName, dbName);
 	}
 
 	/**
@@ -81,57 +123,30 @@ public abstract class Eloquent {
 	 *            , Context
 	 */
 	public Eloquent(Context context) {
-		mDatabase = MozzDB.writebleDatabase(context);
+		TableName tableAnotation = getClass().getAnnotation(TableName.class);
+		String tableName = null;
+		if (tableAnotation != null)
+			tableName = tableAnotation.tablename();
+		else {
+			String className = this.getClass().getSimpleName();
+			tableName = className.substring(0, className.indexOf("Eloquent"))
+					.toLowerCase();
+		}
+
+		init(context, tableName, null);
+	}
+
+	private void init(Context context, String tableName, String dbName) {
+		mDatabase = MozzDB.writebleDatabase(context, dbName);
 
 		mModelClass = modelClass();
 		if (mModelClass == null)
 			throw new IllegalArgumentException(
 					"must pass a no-null class in the ModelClass()");
+		if (tableName == null)
+			throw new IllegalArgumentException("tableName can't be null");
 
-		TableName tableAnotation = getClass().getAnnotation(TableName.class);
-		if (tableAnotation != null)
-			mTableName = tableAnotation.tablename();
-		else {
-			String className = this.getClass().getSimpleName();
-			mTableName = className.substring(0, className.indexOf("Eloquent"))
-					.toLowerCase();
-		}
-
-		checkTableExistAndColumn();
-
-		mQueryBuilder = new QueryBuilder(mTableName, mDatabase, mColumn);
-	}
-
-	/**
-	 * 
-	 * @param context
-	 *            , Context
-	 * @param readOnly
-	 *            , boolean, whether use a readonly database or writeble
-	 *            database
-	 */
-	Eloquent(Context context, boolean readOnly) {
-		if (readOnly) {
-			mDatabase = MozzDB.readOnlyDatabase(context);
-			mReadOnly = true;
-		} else {
-			mDatabase = MozzDB.writebleDatabase(context);
-		}
-
-		mModelClass = (Class<? extends Model>) modelClass();
-
-		if (mModelClass == null)
-			throw new IllegalArgumentException(
-					"must pass a no-null class in the ModelClass()");
-
-		TableName tableAnotation = getClass().getAnnotation(TableName.class);
-		if (tableAnotation != null)
-			mTableName = tableAnotation.tablename();
-		else {
-			String className = this.getClass().getSimpleName();
-			mTableName = className.substring(0, className.indexOf("Eloquent"))
-					.toLowerCase();
-		}
+		mTableName = tableName;
 
 		checkTableExistAndColumn();
 
@@ -185,6 +200,18 @@ public abstract class Eloquent {
 		try {
 			if (mTableExist)
 				return mQueryBuilder.get(mModelClass);
+			else
+				return null;
+		} catch (IllegalAccessException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	public Cursor cursor() {
+		try {
+			if (mTableExist)
+				return mQueryBuilder.cursor();
 			else
 				return null;
 		} catch (IllegalAccessException e) {

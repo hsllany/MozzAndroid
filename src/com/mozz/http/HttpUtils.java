@@ -7,6 +7,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.net.ProtocolException;
 import java.net.URL;
 import java.util.Iterator;
 import java.util.Map;
@@ -21,7 +22,7 @@ import java.util.concurrent.Executors;
  */
 public class HttpUtils {
 
-	private String DEBUG_TAG = this.getClass().getSimpleName();
+	private String DEBUG_TAG = "HttpUtils";
 	/**
 	 * The executor for run http request
 	 */
@@ -117,10 +118,9 @@ public class HttpUtils {
 			try {
 				url = new URL(mURL);
 				urlConnection = (HttpURLConnection) url.openConnection();
-				urlConnection.setDoOutput(true);
-				urlConnection.setDoInput(true);
-				urlConnection.setRequestMethod("POST");
-				urlConnection.setUseCaches(false);
+
+				setURLConnectionParameters("post", urlConnection);
+
 				if (postData != null && postData.length() > 512)
 					urlConnection.setChunkedStreamingMode(5);
 				urlConnection.connect();
@@ -185,7 +185,9 @@ public class HttpUtils {
 			try {
 				url = new URL(mURL);
 				urlConnection = (HttpURLConnection) url.openConnection();
-				urlConnection.setUseCaches(true);
+
+				setURLConnectionParameters("get", urlConnection);
+
 				urlConnection.connect();
 				InputStream in = urlConnection.getInputStream();
 
@@ -220,4 +222,26 @@ public class HttpUtils {
 		private HttpListener mListener;
 	}
 
+	private static void setURLConnectionParameters(String method,
+			HttpURLConnection urlConnection) {
+		if (method.equalsIgnoreCase("get")) {
+			try {
+				urlConnection.setRequestMethod("GET");
+			} catch (ProtocolException e) {
+				e.printStackTrace();
+			}
+			urlConnection.setUseCaches(false);
+			urlConnection.setConnectTimeout(2000);
+			urlConnection.setReadTimeout(2000);
+		} else if (method.equalsIgnoreCase("POST")) {
+			urlConnection.setDoOutput(true);
+			urlConnection.setDoInput(true);
+			try {
+				urlConnection.setRequestMethod("POST");
+			} catch (ProtocolException e) {
+				e.printStackTrace();
+			}
+			urlConnection.setUseCaches(false);
+		}
+	}
 }
