@@ -9,6 +9,6 @@ public class SearchTestCase extends AndroidTestCase {
 	private static final String TAG = "SearchTestCase";
 
 	public void searchTest() {
-		Log.d(TAG, "" + StringUtils.lcs("abcbdab", "bdcaba", null));
+		Log.d(TAG, "" + StringUtils.lcsubstring("abab", "baba", new String()));
 	}
 }
