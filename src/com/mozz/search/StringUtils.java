@@ -1,5 +1,7 @@
 package com.mozz.search;
 
+import android.util.Log;
+
 /**
  * 
  * @author Yang Tao<hsllany@163.com>
@@ -15,17 +17,22 @@ public class StringUtils {
 	 *            , String
 	 * @param s2
 	 *            , String
+	 * @param subsquenece
+	 *            , String, store the longest common subsquence
 	 * @return int, the length of the longest common subsquence
 	 */
-	public static final int lcs(String s1, String s2) {
+	public static final int lcs(String s1, String s2, String subsquenece) {
+		String[][] result = new String[s1.length() + 1][s2.length() + 1];
 		int[][] c = new int[s1.length() + 1][s2.length() + 1];
 
 		for (int i = 0; i <= s1.length(); i++) {
 			c[i][0] = 0;
+			result[i][0] = "";
 		}
 
 		for (int i = 0; i <= s2.length(); i++) {
 			c[0][i] = 0;
+			result[0][i] = "";
 		}
 
 		for (int i = 0; i < s1.length(); i++) {
@@ -35,14 +42,22 @@ public class StringUtils {
 
 				if (s1Char == s2Char) {
 					c[i + 1][j + 1] = c[i][j] + 1;
+					result[i + 1][j + 1] = result[i][j] + s1Char;
 				} else {
-					c[i + 1][j + 1] = c[i][j + 1] > c[i + 1][j] ? c[i][j + 1]
-							: c[i + 1][j];
+					if (c[i][j + 1] > c[i + 1][j]) {
+						c[i + 1][j + 1] = c[i][j + 1];
+						result[i + 1][j + 1] = result[i][j + 1];
+					} else {
+						c[i + 1][j + 1] = c[i + 1][j];
+						result[i + 1][j + 1] = result[i + 1][j];
+					}
 				}
 			}
 		}
-
+		if (subsquenece instanceof String) {
+			subsquenece = result[s1.length()][s2.length()];
+			Log.d("StringUtils", subsquenece);
+		}
 		return c[s1.length()][s2.length()];
 	}
-
 }
