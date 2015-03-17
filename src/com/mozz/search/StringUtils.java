@@ -96,8 +96,13 @@ public class StringUtils {
 				char s2Char = s2.charAt(j);
 
 				if (s1Char == s2Char) {
-					c[i + 1][j + 1] = c[i][j] + 1;
-					result[i + 1][j + 1] = result[i][j] + s1Char;
+					if (i == 0 || j == 0) {
+						c[i + 1][j + 1] = 1;
+						result[i + 1][j + 1] = "" + s1Char;
+					} else {
+						c[i + 1][j + 1] = c[i][j] + 1;
+						result[i + 1][j + 1] = result[i][j] + s1Char;
+					}
 					if (c[i + 1][j + 1] > maxLength) {
 						maxLength = c[i + 1][j + 1];
 						if (substring instanceof String)
