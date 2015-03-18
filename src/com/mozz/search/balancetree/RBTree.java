@@ -62,16 +62,20 @@ public final class RBTree<T extends Searchable> {
 
 				// case 1
 				if (uncleNode.getColor() == RBTreeNode.RED) {
+
 					goNode.getParent().setBlack();
 					uncleNode.setBlack();
 					goNode.getParent().getParent().setRed();
 					goNode = goNode.getParent().getParent();
 					continue;
+
 				} else if (goNode == goNode.getParent().getRight()) {
+					// case 2
 					goNode = goNode.getParent();
 					leftRotate(mRoot, goNode);
 				}
 
+				// case 3
 				goNode.getParent().setBlack();
 				goNode.getParent().getParent().setRed();
 				rightRotate(mRoot, goNode);
@@ -81,16 +85,20 @@ public final class RBTree<T extends Searchable> {
 
 				// case 1
 				if (uncleNode.getColor() == RBTreeNode.RED) {
+
 					goNode.getParent().setBlack();
 					uncleNode.setBlack();
 					goNode.getParent().getParent().setRed();
 					goNode = goNode.getParent().getParent();
 					continue;
+
 				} else if (goNode == goNode.getParent().getLeft()) {
+					// case 2
 					goNode = goNode.getParent();
 					rightRotate(mRoot, goNode);
 				}
 
+				// case 3
 				goNode.getParent().setBlack();
 				goNode.getParent().getParent().setRed();
 				leftRotate(mRoot, goNode);
@@ -100,10 +108,46 @@ public final class RBTree<T extends Searchable> {
 	}
 
 	private void leftRotate(RBTreeNode<T> root, RBTreeNode<T> node) {
+		RBTreeNode<T> y = node.getRight();
 
+		node.setRight(y.getLeft());
+		if (y.getLeft() != null) {
+			y.getLeft().setParent(node);
+		}
+
+		y.setParent(node.getParent());
+
+		if (node.getParent() == null) {
+			root = y;
+		} else if (node == node.getParent().getLeft()) {
+			node.getParent().setLeft(y);
+		} else {
+			node.getParent().setRight(y);
+		}
+
+		y.setLeft(node);
+		node.setParent(y);
 	}
 
 	private void rightRotate(RBTreeNode<T> root, RBTreeNode<T> node) {
+		RBTreeNode<T> x = node.getLeft();
+
+		node.setLeft(x.getLeft());
+		if (x.getLeft() != null) {
+			x.getLeft().setParent(node);
+		}
+
+		x.setParent(node.getParent());
+		if (node.getParent() == null) {
+			root = x;
+		} else if (node == node.getParent().getLeft()) {
+			node.getParent().setLeft(x);
+		} else {
+			node.getParent().setRight(x);
+		}
+
+		x.setRight(x);
+		node.setParent(x);
 
 	}
 
