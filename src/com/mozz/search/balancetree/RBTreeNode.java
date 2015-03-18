@@ -3,7 +3,7 @@ package com.mozz.search.balancetree;
 import com.mozz.search.Searchable;
 
 public class RBTreeNode<T extends Searchable> {
-	private int mKey;
+	private final int mKey;
 	private T mValue;
 
 	private RBTreeNode<T> mParent;

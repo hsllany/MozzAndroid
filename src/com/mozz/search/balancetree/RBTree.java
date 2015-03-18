@@ -14,16 +14,96 @@ public final class RBTree<T extends Searchable> {
 		mSize = 0;
 	}
 
-	public void insert(RBTreeNode<T> node) {
+	public synchronized void insert(RBTreeNode<T> node) {
 		if (mRoot == null) {
 			mRoot = node;
 			mSize++;
-		} else {
-			insert(node, mRoot);
+			return;
 		}
+
+		RBTreeNode<T> goNode = mRoot;
+
+		while (true) {
+			if (node.key() > goNode.key()) {
+				if (goNode.hasRight()) {
+					goNode = goNode.getRight();
+					continue;
+				} else {
+					goNode.setRight(node);
+					node.setParent(goNode);
+					mSize++;
+					break;
+				}
+			} else {
+				if (goNode.hasLeft()) {
+					goNode = goNode.getLeft();
+					continue;
+				} else {
+					goNode.setLeft(node);
+					node.setParent(goNode);
+					mSize++;
+					break;
+				}
+			}
+		}
+
+		node.setRed();
+		insertFixUp(node);
+
 	}
 
-	private void insert(RBTreeNode<T> node, RBTreeNode<T> mRoot) {
+	private synchronized void insertFixUp(RBTreeNode<T> node) {
+		RBTreeNode<T> goNode = node;
+
+		while (goNode.getParent().getColor() == RBTreeNode.RED) {
+			if (goNode.getParent() == goNode.getParent().getParent().getLeft()) {
+				RBTreeNode<T> uncleNode = goNode.getParent().getParent()
+						.getRight();
+
+				// case 1
+				if (uncleNode.getColor() == RBTreeNode.RED) {
+					goNode.getParent().setBlack();
+					uncleNode.setBlack();
+					goNode.getParent().getParent().setRed();
+					goNode = goNode.getParent().getParent();
+					continue;
+				} else if (goNode == goNode.getParent().getRight()) {
+					goNode = goNode.getParent();
+					leftRotate(mRoot, goNode);
+				}
+
+				goNode.getParent().setBlack();
+				goNode.getParent().getParent().setRed();
+				rightRotate(mRoot, goNode);
+			} else {
+				RBTreeNode<T> uncleNode = goNode.getParent().getParent()
+						.getLeft();
+
+				// case 1
+				if (uncleNode.getColor() == RBTreeNode.RED) {
+					goNode.getParent().setBlack();
+					uncleNode.setBlack();
+					goNode.getParent().getParent().setRed();
+					goNode = goNode.getParent().getParent();
+					continue;
+				} else if (goNode == goNode.getParent().getLeft()) {
+					goNode = goNode.getParent();
+					rightRotate(mRoot, goNode);
+				}
+
+				goNode.getParent().setBlack();
+				goNode.getParent().getParent().setRed();
+				leftRotate(mRoot, goNode);
+			}
+		}
+
+	}
+
+	private void leftRotate(RBTreeNode<T> root, RBTreeNode<T> node) {
+
+	}
+
+	private void rightRotate(RBTreeNode<T> root, RBTreeNode<T> node) {
 
 	}
 
