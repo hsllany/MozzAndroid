@@ -13,4 +13,8 @@ public abstract class Searchable implements Cloneable {
 
 	public abstract Searchable clone();
 
+	public int key() {
+		return mMatchString.matchDistance();
+	}
+
 }

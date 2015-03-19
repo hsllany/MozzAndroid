@@ -3,10 +3,9 @@ package com.mozz.search;
 import java.util.List;
 
 import com.mozz.search.balancetree.RBTree;
-import com.mozz.search.balancetree.RBTreeNode;
 
 public class SearchResults<T extends Searchable> {
-	private RBTree<T> mRBTree;
+	private RBTree<Integer, T> mRBTree;
 
 	public SearchResults(String keyword, int matchStrategy) {
 
@@ -14,7 +13,7 @@ public class SearchResults<T extends Searchable> {
 				|| matchStrategy == MatchString.MODE_LCSUBSEQUENCE
 				|| matchStrategy == MatchString.MODE_LCSUBSTRING
 				|| matchStrategy == MatchString.MODE_CONTAIN_KEYWORD) {
-			mRBTree = new RBTree<T>();
+			mRBTree = new RBTree<Integer, T>();
 		} else {
 			throw new IllegalArgumentException(
 					"match strategy muse be one of MODE_STRICT_EQUAL, MODE_LCSUBSEQUENCE, MODE_LCSUBSTRING, MODE_CONTAIN_KEYWORD");
@@ -24,8 +23,7 @@ public class SearchResults<T extends Searchable> {
 
 	public void add(T newToSearch) {
 		if (newToSearch.toSearch() != null) {
-			RBTreeNode<T> node = new RBTreeNode<T>(newToSearch);
-			mRBTree.insert(node);
+			mRBTree.insert(newToSearch.key(), newToSearch);
 		}
 	}
 

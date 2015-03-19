@@ -1,63 +1,79 @@
 package com.mozz.search.balancetree;
 
-import com.mozz.search.Searchable;
+public class RBTreeNode<K extends Comparable<K>, V> {
+	private final K mKey;
+	private V mValue;
 
-public class RBTreeNode<T extends Searchable> {
-	private final int mKey;
-	private T mValue;
+	private RBTreeNode<K, V> mParent;
+	private RBTreeNode<K, V> mLeft;
+	private RBTreeNode<K, V> mRight;
 
-	private RBTreeNode<T> mParent;
-	private RBTreeNode<T> mLeft;
-	private RBTreeNode<T> mRight;
+	private RBTreeNode<K, V> mNil;
 
 	private short mColor;
 
 	public static final short RED = 0xff;
 	public static final short BLACK = 0x00;
 
-	public RBTreeNode(T value) {
-		mKey = value.toSearch().matchDistance();
+	public RBTreeNode(K key, V value, RBTreeNode<K, V> nilNode) {
+		mKey = key;
 		mValue = value;
+		mNil = nilNode;
+
+		mParent = mNil;
+		mLeft = mNil;
+		mRight = mNil;
 	}
 
-	public int key() {
+	// for T.nil
+	RBTreeNode() {
+		mKey = null;
+		mValue = null;
+		mColor = BLACK;
+	}
+
+	public K key() {
 		return mKey;
 	}
 
-	public T value() {
+	public V value() {
 		return mValue;
 	}
 
-	public void setParent(RBTreeNode<T> parent) {
+	public void setParent(RBTreeNode<K, V> parent) {
 		mParent = parent;
 	}
 
-	public RBTreeNode<T> getParent() {
+	public RBTreeNode<K, V> getParent() {
 		return mParent;
 	}
 
-	public void setLeft(RBTreeNode<T> left) {
+	public boolean hasParent() {
+		return mParent != mNil || mParent != null;
+	}
+
+	public void setLeft(RBTreeNode<K, V> left) {
 		mLeft = left;
 	}
 
-	public RBTreeNode<T> getLeft() {
+	public RBTreeNode<K, V> getLeft() {
 		return mLeft;
 	}
 
 	public boolean hasLeft() {
-		return mLeft != null;
+		return mLeft != mNil;
 	}
 
-	public void setRight(RBTreeNode<T> right) {
+	public void setRight(RBTreeNode<K, V> right) {
 		mRight = right;
 	}
 
-	public RBTreeNode<T> getRight() {
+	public RBTreeNode<K, V> getRight() {
 		return mRight;
 	}
 
 	public boolean hasRight() {
-		return mRight != null;
+		return mRight != mNil;
 	}
 
 	public void setBlack() {
@@ -72,4 +88,24 @@ public class RBTreeNode<T extends Searchable> {
 		return mColor;
 	}
 
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		sb.append("{key:" + mKey + ", value:" + mValue);
+		if (mColor == BLACK) {
+			sb.append(", BLACK");
+		} else {
+			sb.append(", RED");
+		}
+		if (hasLeft()) {
+			sb.append(", left: " + getLeft());
+		}
+
+		if (hasRight()) {
+			sb.append(", right: " + getRight());
+		}
+
+		sb.append("}");
+		return sb.toString();
+	}
 }

@@ -3,28 +3,32 @@ package com.mozz.search.balancetree;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.mozz.search.Searchable;
-
-public final class RBTree<T extends Searchable> {
-	private RBTreeNode<T> mRoot;
+public final class RBTree<K extends Comparable<K>, V> {
+	private RBTreeNode<K, V> mRoot;
+	private RBTreeNode<K, V> mNil;
 	private int mSize;
 
 	public RBTree() {
 		mRoot = null;
 		mSize = 0;
+
+		mNil = new RBTreeNode<K, V>();
 	}
 
-	public synchronized void insert(RBTreeNode<T> node) {
+	protected synchronized void insert(RBTreeNode<K, V> node) {
 		if (mRoot == null) {
 			mRoot = node;
+			mRoot.setBlack();
+
 			mSize++;
 			return;
 		}
 
-		RBTreeNode<T> goNode = mRoot;
+		RBTreeNode<K, V> goNode = mRoot;
 
 		while (true) {
-			if (node.key() > goNode.key()) {
+			// bigger
+			if (node.key().compareTo(goNode.key()) > 0) {
 				if (goNode.hasRight()) {
 					goNode = goNode.getRight();
 					continue;
@@ -52,12 +56,17 @@ public final class RBTree<T extends Searchable> {
 
 	}
 
-	private synchronized void insertFixUp(RBTreeNode<T> node) {
-		RBTreeNode<T> goNode = node;
+	public synchronized void insert(K key, V value) {
+		RBTreeNode<K, V> node = new RBTreeNode<K, V>(key, value, mNil);
+		insert(node);
+	}
+
+	private synchronized void insertFixUp(RBTreeNode<K, V> node) {
+		RBTreeNode<K, V> goNode = node;
 
 		while (goNode.getParent().getColor() == RBTreeNode.RED) {
 			if (goNode.getParent() == goNode.getParent().getParent().getLeft()) {
-				RBTreeNode<T> uncleNode = goNode.getParent().getParent()
+				RBTreeNode<K, V> uncleNode = goNode.getParent().getParent()
 						.getRight();
 
 				// case 1
@@ -67,20 +76,23 @@ public final class RBTree<T extends Searchable> {
 					uncleNode.setBlack();
 					goNode.getParent().getParent().setRed();
 					goNode = goNode.getParent().getParent();
+					if (goNode.getParent() == mNil)
+						break;
 					continue;
 
 				} else if (goNode == goNode.getParent().getRight()) {
 					// case 2
 					goNode = goNode.getParent();
-					leftRotate(mRoot, goNode);
+					leftRotate(goNode);
 				}
 
 				// case 3
 				goNode.getParent().setBlack();
 				goNode.getParent().getParent().setRed();
-				rightRotate(mRoot, goNode);
+				rightRotate(goNode.getParent().getParent());
+				break;
 			} else {
-				RBTreeNode<T> uncleNode = goNode.getParent().getParent()
+				RBTreeNode<K, V> uncleNode = goNode.getParent().getParent()
 						.getLeft();
 
 				// case 1
@@ -90,35 +102,40 @@ public final class RBTree<T extends Searchable> {
 					uncleNode.setBlack();
 					goNode.getParent().getParent().setRed();
 					goNode = goNode.getParent().getParent();
+					if (goNode.getParent() == mNil)
+						break;
 					continue;
 
 				} else if (goNode == goNode.getParent().getLeft()) {
 					// case 2
 					goNode = goNode.getParent();
-					rightRotate(mRoot, goNode);
+					rightRotate(goNode);
 				}
 
 				// case 3
 				goNode.getParent().setBlack();
 				goNode.getParent().getParent().setRed();
-				leftRotate(mRoot, goNode);
+				leftRotate(goNode.getParent().getParent());
+				break;
 			}
 		}
 
+		mRoot.setBlack();
+
 	}
 
-	private void leftRotate(RBTreeNode<T> root, RBTreeNode<T> node) {
-		RBTreeNode<T> y = node.getRight();
+	private void leftRotate(RBTreeNode<K, V> node) {
+		RBTreeNode<K, V> y = node.getRight();
 
 		node.setRight(y.getLeft());
-		if (y.getLeft() != null) {
+		if (y.hasLeft()) {
 			y.getLeft().setParent(node);
 		}
 
 		y.setParent(node.getParent());
 
-		if (node.getParent() == null) {
-			root = y;
+		if (node.getParent() == mNil) {
+			mRoot = y;
 		} else if (node == node.getParent().getLeft()) {
 			node.getParent().setLeft(y);
 		} else {
@@ -129,40 +146,40 @@ public final class RBTree<T extends Searchable> {
 		node.setParent(y);
 	}
 
-	private void rightRotate(RBTreeNode<T> root, RBTreeNode<T> node) {
-		RBTreeNode<T> x = node.getLeft();
+	private void rightRotate(RBTreeNode<K, V> node) {
+		RBTreeNode<K, V> x = node.getLeft();
 
-		node.setLeft(x.getLeft());
-		if (x.getLeft() != null) {
-			x.getLeft().setParent(node);
+		node.setLeft(x.getRight());
+		if (x.hasRight()) {
+			x.getRight().setParent(node);
 		}
 
 		x.setParent(node.getParent());
-		if (node.getParent() == null) {
-			root = x;
+		if (node.getParent() == mNil) {
+			mRoot = x;
 		} else if (node == node.getParent().getLeft()) {
 			node.getParent().setLeft(x);
 		} else {
 			node.getParent().setRight(x);
 		}
 
-		x.setRight(x);
+		x.setRight(node);
 		node.setParent(x);
 
 	}
 
-	public T search(int key) {
+	public V search(K key) {
 		return search(key, mRoot).value();
 	}
 
-	private RBTreeNode<T> search(int key, RBTreeNode<T> root) {
+	private RBTreeNode<K, V> search(K key, RBTreeNode<K, V> root) {
 		if (root == null)
 			return null;
 
-		if (key == root.key()) {
+		if (key.compareTo(root.key()) == 0) {
 			return root;
 		}
-		if (key < root.key()) {
+		if (key.compareTo(root.key()) < 0) {
 			if (root.hasLeft()) {
 				return search(key, root.getLeft());
 			} else {
@@ -177,13 +194,13 @@ public final class RBTree<T extends Searchable> {
 		}
 	}
 
-	public List<T> ascResult() {
-		List<T> result = new ArrayList<T>();
+	public List<V> ascResult() {
+		List<V> result = new ArrayList<V>();
 		ascResult(result, mRoot);
 		return result;
 	}
 
-	private void ascResult(List<T> result, RBTreeNode<T> root) {
+	private void ascResult(List<V> result, RBTreeNode<K, V> root) {
 		if (root.hasLeft()) {
 			ascResult(result, root.getLeft());
 		}
@@ -195,13 +212,13 @@ public final class RBTree<T extends Searchable> {
 		}
 	}
 
-	public List<T> descResult() {
-		List<T> result = new ArrayList<T>();
+	public List<V> descResult() {
+		List<V> result = new ArrayList<V>();
 		descResult(result, mRoot);
 		return result;
 	}
 
-	private void descResult(List<T> result, RBTreeNode<T> root) {
+	private void descResult(List<V> result, RBTreeNode<K, V> root) {
 		if (root.hasRight()) {
 			descResult(result, root.getRight());
 		}
