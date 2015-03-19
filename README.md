@@ -374,3 +374,12 @@ cache.getOrExpired("cacheKey2", new GetCallback() {
 
 MozzSearch
 ------------------
+Mozz search实现了通过从某数据源读取数据，和关键字keyword进行字符串匹配，并根据匹配权值输出List序列。
+
+Mozz的搜索策略有
+- MODE_STRICT_EQUAL: 和关键字严格相等
+- MODE_CONTAIN_KEYWORD：包含关键字
+- MODE_LCSUBSEQUENCE：和关键字有最长子序列
+- MODE_LCSUBSTRING：和关键字拥有最长子串
+
+Mozz在搜索策略及关键字不变的前提下，按匹配权值的大小，正序及逆序的输出搜索结果，并利用平衡二叉树动态的维护该结果。
