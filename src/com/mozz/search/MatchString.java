@@ -1,9 +1,24 @@
 package com.mozz.search;
 
 public class MatchString {
+	/**
+	 * content.equals(keyword)
+	 */
 	public static final int MODE_STRICT_EQUAL = 0x11;
+
+	/**
+	 * content and keyword has the longest common sequence
+	 */
 	public static final int MODE_LCSUBSEQUENCE = 0x12;
+
+	/**
+	 * content and keyword has the longest common substring
+	 */
 	public static final int MODE_LCSUBSTRING = 0x13;
+
+	/**
+	 * content contains the keyword as substring
+	 */
 	public static final int MODE_CONTAIN_KEYWORD = 0x14;
 
 	private String mContent;
