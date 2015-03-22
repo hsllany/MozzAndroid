@@ -1,5 +1,7 @@
 package com.mozz.test;
 
+import java.io.File;
+
 import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
@@ -7,13 +9,15 @@ import android.util.Log;
 import com.mozz.cache.FileCache;
 import com.mozz.cache.GetCallback;
 import com.mozz.cache.PutCallback;
+import com.mozz.utils.MozzConfig;
 
 public class MainActivity extends Activity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		Player test = new Player(System.currentTimeMillis());
-		FileCache cache = FileCache.instance(this);
+		FileCache cache = FileCache.instance(this,
+				new File(MozzConfig.getAppAbsoluteDir(this)));
 
 		cache.putWithVersion("haha", test, 1L, null);
 

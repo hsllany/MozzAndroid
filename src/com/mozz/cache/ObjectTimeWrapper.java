@@ -2,17 +2,15 @@ package com.mozz.cache;
 
 import java.io.Serializable;
 
-import com.mozz.cache.FileCache.CacheStratigy;
-
 public class ObjectTimeWrapper implements Serializable {
 	private static final long serialVersionUID = 201503092309L;
 
 	private long mExpireTime = -1;
 	private final Serializable mObject;
 	private long mVersion = -1;
-	private final CacheStratigy mCacheStratigy;
+	private final byte mCacheStratigy;
 
-	ObjectTimeWrapper(Serializable obj, CacheStratigy cacheStratigy) {
+	ObjectTimeWrapper(Serializable obj, byte cacheStratigy) {
 		mObject = obj;
 		mCacheStratigy = cacheStratigy;
 	}
@@ -21,7 +19,7 @@ public class ObjectTimeWrapper implements Serializable {
 		return mObject;
 	}
 
-	public CacheStratigy cacheStratigy() {
+	public byte cacheStratigy() {
 		return mCacheStratigy;
 	}
 
@@ -34,7 +32,7 @@ public class ObjectTimeWrapper implements Serializable {
 	}
 
 	public void setExpireTime(long expireTime) throws Exception {
-		if (mCacheStratigy == CacheStratigy.Cache_Expire) {
+		if (mCacheStratigy == FileCache.CACHE_BY_EXPIRE) {
 			mExpireTime = expireTime;
 		} else {
 			throw new Exception(
@@ -43,7 +41,7 @@ public class ObjectTimeWrapper implements Serializable {
 	}
 
 	public void setVersion(long version) throws Exception {
-		if (mCacheStratigy == CacheStratigy.Cache_Version) {
+		if (mCacheStratigy == FileCache.CACHE_BY_VERSION) {
 			mVersion = version;
 		} else {
 			throw new Exception(
