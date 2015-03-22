@@ -13,6 +13,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Http tools for Android application
@@ -22,7 +23,11 @@ import java.util.concurrent.Executors;
  */
 public class HttpUtils {
 
-	private String DEBUG_TAG = "HttpUtils";
+	private static final String DEBUG_TAG = "HttpUtils";
+
+	private static final String AGENT = "mozz";
+
+	private static AtomicInteger mInstanceCount = new AtomicInteger(0);
 	/**
 	 * The executor for run http request
 	 */
@@ -31,6 +36,7 @@ public class HttpUtils {
 	public HttpUtils() {
 		if (httpExecutor == null) {
 			httpExecutor = Executors.newCachedThreadPool();
+			mInstanceCount.addAndGet(1);
 		}
 	}
 
@@ -50,9 +56,12 @@ public class HttpUtils {
 	 * If you met any situation that should use full compacity of CPU, you
 	 * should release the HttpUtils
 	 */
-	public static void release() {
-		httpExecutor.shutdown();
-		httpExecutor = null;
+	private static void release() {
+		mInstanceCount.decrementAndGet();
+		if (mInstanceCount.get() == 0) {
+			httpExecutor.shutdown();
+			httpExecutor = null;
+		}
 	}
 
 	/**
@@ -101,7 +110,7 @@ public class HttpUtils {
 
 	}
 
-	class HttpPost implements Runnable {
+	private static class HttpPost implements Runnable {
 		public HttpPost(String address, HttpListener l, String parameters) {
 			this.mListener = l;
 			this.mURL = address;
@@ -168,7 +177,7 @@ public class HttpUtils {
 
 	}
 
-	class HttpGet implements Runnable {
+	private static class HttpGet implements Runnable {
 
 		public HttpGet(String address, HttpListener l) {
 			this.mURL = address;
@@ -224,6 +233,10 @@ public class HttpUtils {
 
 	private static void setURLConnectionParameters(String method,
 			HttpURLConnection urlConnection) {
+
+		urlConnection.setConnectTimeout(2000);
+		urlConnection.setReadTimeout(2000);
+
 		if (method.equalsIgnoreCase("get")) {
 			try {
 				urlConnection.setRequestMethod("GET");
@@ -231,8 +244,7 @@ public class HttpUtils {
 				e.printStackTrace();
 			}
 			urlConnection.setUseCaches(false);
-			urlConnection.setConnectTimeout(2000);
-			urlConnection.setReadTimeout(2000);
+
 		} else if (method.equalsIgnoreCase("POST")) {
 			urlConnection.setDoOutput(true);
 			urlConnection.setDoInput(true);
