@@ -10,7 +10,7 @@ import java.net.URL;
 import java.net.URLConnection;
 
 public class DownloaderHttpUtils extends HttpUtils {
-	class HttpDownloaderTast implements Runnable {
+	private static class HttpDownloaderTast implements Runnable {
 
 		public HttpDownloaderTast(String url, HttpDownloadListener l,
 				String path, String fileName) {
