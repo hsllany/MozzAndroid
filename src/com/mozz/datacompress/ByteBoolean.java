@@ -60,7 +60,8 @@ public final class ByteBoolean {
 	 * @param status
 	 */
 	public ByteBoolean(byte[] bytes, String[] status) {
-		if (status.length / bytes.length == 8) {
+		if (status.length / bytes.length == 8
+				&& status.length % bytes.length == 0) {
 			mByte = bytes;
 			mStatus = status;
 			mByteSize = bytes.length;
@@ -122,6 +123,7 @@ public final class ByteBoolean {
 			throw new IllegalArgumentException(
 					"index must be greater or equal to 0, and less than size");
 		}
+
 	}
 
 	/**
