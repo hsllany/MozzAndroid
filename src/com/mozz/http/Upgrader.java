@@ -6,6 +6,7 @@ import org.json.JSONObject;
 import android.content.Context;
 
 import com.mozz.utils.MozzConfig;
+import com.mozz.utils.SystemInfo;
 
 public class Upgrader {
 
@@ -34,7 +35,7 @@ public class Upgrader {
 						String serverVersionDescription = jsonObject
 								.getString("des");
 
-						if (MozzConfig.getPackageVersionCode(mContext) < serverCode) {
+						if (SystemInfo.getPackageVersionCode(mContext) < serverCode) {
 							mDownloadUrl = jsonObject.getString("downloadurl");
 							mUpgradeListener.onNewVersion(serverCode,
 									serverVersion, serverVersionDescription);

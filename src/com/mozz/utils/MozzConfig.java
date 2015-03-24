@@ -114,33 +114,4 @@ public class MozzConfig {
 
 		return metaData;
 	}
-
-	public static int getPackageVersionCode(Context context) {
-		try {
-			PackageInfo pinfo = context.getPackageManager().getPackageInfo(
-					context.getPackageName(), 0);
-			return pinfo.versionCode;
-		} catch (NameNotFoundException e) {
-			e.printStackTrace();
-			return -1;
-		}
-	}
-
-	public static String getPackageVersionName(Context context) {
-		try {
-			PackageInfo pinfo = context.getPackageManager().getPackageInfo(
-					context.getPackageName(), 0);
-			return pinfo.versionName;
-		} catch (NameNotFoundException e) {
-			e.printStackTrace();
-			return null;
-		}
-	}
-
-	public static String getDeviceId(Context context) {
-		final TelephonyManager manager = (TelephonyManager) context
-				.getSystemService(Context.TELEPHONY_SERVICE);
-		return manager.getDeviceId();
-	}
-
 }

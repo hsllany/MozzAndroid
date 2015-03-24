@@ -3,9 +3,10 @@ package com.mozz.datacompress;
 import java.nio.ByteBuffer;
 
 /**
- * In common word, there are many small floats such as temperature, weight of
- * man, speed of cars etc. This class is try to convert those small 32-bit float
- * to simply just 2 bytes, which will improve the performance during web
+ * In our dairy world, there are many small floats such as temperature, weight
+ * of man, speed of cars etc. These floats are not too big, also they don't need
+ * high accuracy. This class is try to convert those small 32-bit float to
+ * simply just 2 bytes, which will improve the performance during web
  * transformation.
  * 
  * @author Yang Tao <hsllany@163.com>
