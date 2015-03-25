@@ -34,27 +34,23 @@ public final class ByteFloat {
 
 		if (mFloatValue >= 0) {
 			int integer = (int) Math.floor(mFloatValue);
-			int decimal = decimalToInt(mFloatValue);
+			int decimal = (int) Math.round((mFloatValue - integer) * 100);
 			if (integer <= 127) {
-				if (decimal <= 255) {
-					mByte = new byte[2];
-					mByte[0] = (byte) (integer & 0xff);
-					mByte[1] = (byte) (decimal & 0xff);
-				}
+				mByte = new byte[2];
+				mByte[0] = (byte) (integer & 0xff);
+				mByte[1] = (byte) (decimal & 0xff);
 			}
 		} else {
 			int integer = (int) Math.ceil(mFloatValue);
-			int decimal = decimalToInt(mFloatValue);
+			int decimal = (int) Math.round((-mFloatValue + integer) * 100);
 			if (-integer <= 127) {
-				if (decimal <= 255) {
-					mByte = new byte[2];
-					mByte[0] = (byte) ((-integer) & 0xff);
+				mByte = new byte[2];
+				mByte[0] = (byte) ((-integer) & 0xff);
 
-					byte negativeByte = (byte) (1 << 7);
-					mByte[0] = (byte) (mByte[0] | negativeByte);
+				byte negativeByte = (byte) (1 << 7);
+				mByte[0] = (byte) (mByte[0] | negativeByte);
 
-					mByte[1] = (byte) (decimal & 0xff);
-				}
+				mByte[1] = (byte) ((decimal) & 0xff);
 			}
 
 		}
@@ -72,12 +68,12 @@ public final class ByteFloat {
 			if (negative != 0) {
 				// is negative
 				int integer = bytes[0] & 0x7f;
-				float decimal = intToDecimal(((int) bytes[1]));
+				float decimal = bytes[1] / 100f;
 
 				mFloatValue = -integer - decimal;
 			} else {
 				int integer = bytes[0];
-				float decimal = intToDecimal(((int) bytes[1]));
+				float decimal = bytes[1] / 100f;
 				mFloatValue = integer + decimal;
 			}
 
@@ -114,6 +110,11 @@ public final class ByteFloat {
 		return sb.toString();
 	}
 
+	/**
+	 * get bytes representation
+	 * 
+	 * @return
+	 */
 	public byte[] toBytes() {
 		if (mByte != null) {
 			return mByte;
@@ -139,50 +140,6 @@ public final class ByteFloat {
 		sb.append(binaryExp);
 
 		return sb.toString();
-	}
-
-	/**
-	 * Retrieve the integer value from float's decimal.
-	 * 
-	 * @param decimal
-	 * @return integer part, {@code int}
-	 */
-	public static int decimalToInt(float decimal) {
-		char[] charExp = Float.toString(decimal).toCharArray();
-		StringBuilder sb = new StringBuilder();
-		int i = 0;
-		boolean meetDot = false;
-		while (i < charExp.length) {
-			if (meetDot) {
-				sb.append(charExp[i]);
-			} else {
-				if (charExp[i] == '.') {
-					meetDot = true;
-				}
-			}
-
-			i++;
-		}
-
-		return Integer.parseInt(sb.toString());
-	}
-
-	/**
-	 * Retrieve the float value from integer value
-	 * 
-	 * @param integer
-	 * @return
-	 */
-	public static float intToDecimal(int integer) {
-		char[] charExp = Integer.toString(integer).toCharArray();
-		StringBuilder sb = new StringBuilder();
-
-		sb.append("0.");
-		for (int i = 0; i < charExp.length; i++) {
-			sb.append(charExp[i]);
-		}
-
-		return Float.parseFloat(sb.toString());
 	}
 
 	/**
