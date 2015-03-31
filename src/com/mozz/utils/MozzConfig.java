@@ -11,6 +11,11 @@ import android.os.Bundle;
 import android.telephony.TelephonyManager;
 
 public class MozzConfig {
+
+	private static String appCacheDir;
+	private static String appUpdateDir;
+	private static String appLogDir;
+
 	/**
 	 * Read the App File Dir from manifest. if you should use this, please set
 	 * metadata inside the Application node. Example:
@@ -37,21 +42,40 @@ public class MozzConfig {
 		return null;
 	}
 
-	public static void makeAppDirs(Context context, String fileDir) {
-		File file = new File(fileDir);
-		if (!file.exists())
-			file.mkdirs();
-		File cacheFile = new File(getAppAbsoluteDir(context) + "/cache");
+	public static String getAppAbsoluteDir(String dirPath) {
+		return SDCard.sdCardDir() + dirPath + File.separator;
+	}
+
+	public static String getAppCacheDir() {
+		return appCacheDir;
+	}
+
+	public static String getAppUpdateDir() {
+		return appUpdateDir;
+	}
+
+	public static String getAppLogDir() {
+		return appLogDir;
+	}
+
+	public static void makeAppDirs(String fileDir) {
+		File cacheFile = new File(getAppAbsoluteDir(fileDir) + "/cache");
+		appCacheDir = cacheFile.getPath();
 		if (!cacheFile.exists())
 			cacheFile.mkdirs();
-		File updateFile = new File(getAppAbsoluteDir(context) + "/update");
+		File updateFile = new File(getAppAbsoluteDir(fileDir) + "/update");
+		appUpdateDir = updateFile.getPath();
 		if (!updateFile.exists())
 			updateFile.mkdirs();
+		File logFile = new File(getAppAbsoluteDir(fileDir) + "/log");
+		appLogDir = logFile.getPath();
+		if (!logFile.exists())
+			logFile.mkdirs();
 	}
 
 	public static void makeAppDirs(Context context) {
 		String appDir = getAppAbsoluteDir(context);
-		makeAppDirs(context, appDir);
+		makeAppDirs(appDir);
 	}
 
 	/**
