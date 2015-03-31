@@ -1,11 +1,1 @@
-bin
-gen
-settings
-assets
-res
-libs
-*.classpath
-*.project
-*.png
-proguard-project.txt
-project.properties
+
