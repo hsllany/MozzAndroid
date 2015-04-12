@@ -5,7 +5,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
@@ -20,25 +19,62 @@ import com.mozz.utils.SDCard;
  */
 public class NioFileUtils {
 
+	/**
+	 * create new file on sdcard
+	 * 
+	 * @param path
+	 *            , folders path
+	 * @param fileNameWithSuffix
+	 * @return file, otherwise null
+	 * @throws IOException
+	 */
 	public static final File newFileOnSD(String path, String fileNameWithSuffix)
 			throws IOException {
-		File file = new File(SDCard.sdCardDir() + File.pathSeparator + "path"
-				+ File.pathSeparator + fileNameWithSuffix);
-		file.createNewFile();
-		return file;
+		if (SDCard.isSDCardMounted()) {
+			File dir = new File(SDCard.sdCardDir() + File.separator + path);
+			if (!dir.exists()) {
+				dir.mkdirs();
+
+			}
+
+			File file = new File(SDCard.sdCardDir() + File.separator + path
+					+ File.separator + fileNameWithSuffix);
+			if (!file.exists()) {
+				file.createNewFile();
+			}
+			return file;
+		} else {
+			return null;
+		}
 	}
 
-	public static final void writeString(String toWrite, File toFile)
-			throws FileNotFoundException {
-		FileInputStream toIn = new FileInputStream(toFile);
-		FileChannel toChannel = toIn.getChannel();
+	/**
+	 * write string to files
+	 * 
+	 * @param toWrite
+	 *            , String to write
+	 * @param toFile
+	 *            , destination file to writein
+	 * @param append
+	 *            , if true, then bytes will be written to the end of the file
+	 *            rather than the beginning
+	 * @throws FileNotFoundException
+	 */
+	public static final void writeString(String toWrite, File toFile,
+			boolean append) throws FileNotFoundException {
+		FileOutputStream toOut = new FileOutputStream(toFile, append);
+
+		FileChannel toChannel = toOut.getChannel();
 
 		FileLock fileLock = null;
 		try {
 			fileLock = toChannel.lock();
 
 			ByteBuffer byteBuffer = ByteBuffer.wrap(toWrite.getBytes());
-			toChannel.position(toChannel.size());
+
+			if (append) {
+				toChannel.position(toChannel.size());
+			}
 
 			while (toChannel.write(byteBuffer) > 0) {
 			}
@@ -59,7 +95,7 @@ public class NioFileUtils {
 				e.printStackTrace();
 			} finally {
 				try {
-					toIn.close();
+					toOut.close();
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -69,15 +105,15 @@ public class NioFileUtils {
 
 	public static final void copy(File fromFile, File toFile)
 			throws FileNotFoundException {
-		copy(new FileOutputStream(fromFile), toFile);
+		copy(new FileInputStream(fromFile), toFile);
 	}
 
-	public static final void copy(FileOutputStream fromFile, File toFile)
+	public static final void copy(FileInputStream fromFile, File toFile)
 			throws FileNotFoundException {
 
 		FileChannel fromChannel = fromFile.getChannel();
 
-		FileInputStream toIn = new FileInputStream(toFile);
+		FileOutputStream toIn = new FileOutputStream(toFile);
 		FileChannel toChannel = toIn.getChannel();
 
 		FileLock lock = null;
