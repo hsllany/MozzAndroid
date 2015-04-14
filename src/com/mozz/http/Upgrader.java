@@ -30,14 +30,19 @@ public class Upgrader {
 						JSONObject jsonObject = new JSONObject(response
 								.entity());
 						int serverCode = jsonObject.getInt("versionCode");
+						int forceCode = jsonObject.getInt("forceCode");
 						String serverVersion = jsonObject
 								.getString("versionName");
 						String serverVersionDescription = jsonObject
 								.getString("des");
 
 						if (SystemInfo.getPackageVersionCode(mContext) < serverCode) {
+							boolean forceUpgrade = false;
+							if (forceCode==1) {
+								forceUpgrade = true;
+							}
 							mDownloadUrl = jsonObject.getString("downloadurl");
-							mUpgradeListener.onNewVersion(serverCode,
+							mUpgradeListener.onNewVersion(forceUpgrade,serverCode,
 									serverVersion, serverVersionDescription);
 						} else {
 							mUpgradeListener.onNoNewVersion();

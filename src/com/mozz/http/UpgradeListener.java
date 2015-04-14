@@ -13,8 +13,8 @@ public interface UpgradeListener {
 	 * @param serverVersionDescription
 	 *            , server version description
 	 */
-	public void onNewVersion(int serverVersionCode, String serverVersion,
-			String serverVersionDescription);
+	public void onNewVersion(boolean forceUpgrade, int serverVersionCode,
+			String serverVersion, String serverVersionDescription);
 
 	public void onNoNewVersion();
 
