@@ -430,7 +430,7 @@ public class HttpUtils {
 
 	}
 
-	public static class HttpPostFile implements Runnable {
+	private static class HttpPostFile implements Runnable {
 		private List<File> mFiles;
 		private String mUrl;
 		private Map<String, String> mPostdata;
