@@ -20,7 +20,8 @@ import com.mozz.utils.SDCard;
 public class NioFileUtils {
 
 	/**
-	 * create new file on sdcard
+	 * create new file on sdcard, will block if the file is locked by another
+	 * process
 	 * 
 	 * @param path
 	 *            , folders path
@@ -49,7 +50,8 @@ public class NioFileUtils {
 	}
 
 	/**
-	 * write string to files
+	 * write string to files, will block if the file is locked by another
+	 * process
 	 * 
 	 * @param toWrite
 	 *            , String to write
@@ -84,23 +86,29 @@ public class NioFileUtils {
 			e.printStackTrace();
 		} finally {
 			try {
-				fileLock.release();
+				if (fileLock != null)
+					fileLock.release();
 			} catch (IOException e1) {
 				e1.printStackTrace();
-			}
-
-			try {
-				toChannel.close();
-			} catch (IOException e) {
-				e.printStackTrace();
 			} finally {
 				try {
-					toOut.close();
+					toChannel.close();
 				} catch (IOException e) {
 					e.printStackTrace();
+				} finally {
+					try {
+						toOut.close();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
 				}
 			}
 		}
+	}
+
+	public static final void copy(String fromFile, String toFile)
+			throws FileNotFoundException {
+		copy(new File(fromFile), new File(toFile));
 	}
 
 	public static final void copy(File fromFile, File toFile)
