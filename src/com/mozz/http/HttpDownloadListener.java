@@ -1,11 +1,11 @@
 package com.mozz.http;
 
 public interface HttpDownloadListener {
-	public void onDownloadStart(int fileSize);
+	public void onDownloadStart(long fileSize);
 
-	public void onDownloading(int downloadSize);
+	public void onDownloading(long downloadSize);
 
 	public void onDownloadSuccess();
 
-	public void onDownloadFailed();
+	public void onDownloadFailed(Exception e);
 }

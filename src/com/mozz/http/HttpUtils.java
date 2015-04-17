@@ -1,16 +1,25 @@
 package com.mozz.http;
 
 import java.io.BufferedReader;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
+import java.net.URLConnection;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -26,6 +35,18 @@ public class HttpUtils {
 	private static final String DEBUG_TAG = "HttpUtils";
 
 	private static final String AGENT = "mozz";
+
+	private static final String CRLF = "\r\n";
+
+	private final static String BOUNDARY = "MOZZEEDN9JOFxnp3Q8_2lXBfEexEE_Rnsey";
+
+	private final static String PREFIX = "--";
+
+	private final static String MUTIPART_FORMDATA = "multipart/form-data";
+
+	private final static String CHARSET = "UTF-8";
+
+	private final static String CONTENTTYPE = "application/octet-stream";
 
 	private static AtomicInteger mInstanceCount = new AtomicInteger(0);
 	/**
@@ -50,25 +71,6 @@ public class HttpUtils {
 	 */
 	public void get(String url, HttpListener l) {
 		httpExecutor.execute(new HttpGet(url, l));
-	}
-
-	/**
-	 * If you met any situation that should use full compacity of CPU, you
-	 * should release the HttpUtils
-	 */
-	private static void release() {
-		mInstanceCount.decrementAndGet();
-		if (mInstanceCount.get() == 0) {
-			httpExecutor.shutdown();
-			httpExecutor = null;
-		}
-	}
-
-	/**
-	 * @see release()
-	 */
-	public void releaseHttp() {
-		release();
 	}
 
 	/**
@@ -110,6 +112,57 @@ public class HttpUtils {
 
 	}
 
+	public void download(String url, HttpDownloadListener l, String path,
+			String fileName) {
+		httpExecutor.execute(new HttpDownloaderTast(url, l, path, fileName));
+	}
+
+	public String download(String url, HttpDownloadListener l, String pathOnly) {
+		String fileName = "MozzFiles_" + System.currentTimeMillis() + ".mozz";
+		httpExecutor
+				.execute(new HttpDownloaderTast(url, l, pathOnly, fileName));
+		return fileName;
+	}
+
+	public void upload(String url, HttpUploadFileListener l,
+			List<File> fileList, Map<String, String> postData) {
+		httpExecutor.execute(new HttpPostFile(url, fileList, postData, l));
+	}
+
+	public void upload(String url, HttpUploadFileListener l, File file,
+			Map<String, String> postData) {
+		List<File> fileList = new ArrayList<File>();
+		upload(url, l, fileList, postData);
+	}
+
+	public void upload(String url, HttpUploadFileListener l, List<File> fileList) {
+		upload(url, l, fileList, null);
+	}
+
+	public void upload(String url, HttpUploadFileListener l, File file) {
+		List<File> fileList = new ArrayList<File>();
+		upload(url, l, fileList);
+	}
+
+	/**
+	 * If you met any situation that should use full compacity of CPU, you
+	 * should release the HttpUtils
+	 */
+	private static void release() {
+		mInstanceCount.decrementAndGet();
+		if (mInstanceCount.get() == 0) {
+			httpExecutor.shutdown();
+			httpExecutor = null;
+		}
+	}
+
+	/**
+	 * @see release()
+	 */
+	public void releaseHttp() {
+		release();
+	}
+
 	private static class HttpPost implements Runnable {
 		public HttpPost(String address, HttpListener l, String parameters) {
 			this.mListener = l;
@@ -123,7 +176,9 @@ public class HttpUtils {
 			StringBuilder sb = new StringBuilder();
 			HttpURLConnection urlConnection = null;
 			URL url = null;
-
+			OutputStreamWriter osw = null;
+			InputStream in = null;
+			BufferedReader br = null;
 			try {
 				url = new URL(mURL);
 				urlConnection = (HttpURLConnection) url.openConnection();
@@ -135,24 +190,20 @@ public class HttpUtils {
 				urlConnection.connect();
 
 				if (postData != null) {
-					OutputStreamWriter osw = new OutputStreamWriter(
+					osw = new OutputStreamWriter(
 							urlConnection.getOutputStream(), "UTF-8");
 					osw.write(postData);
 					osw.flush();
-					osw.close();
 				}
 
-				InputStream in = urlConnection.getInputStream();
-				BufferedReader br = new BufferedReader(
-						new InputStreamReader(in));
+				in = urlConnection.getInputStream();
+				br = new BufferedReader(new InputStreamReader(in));
 
 				String line = null;
 
 				while ((line = br.readLine()) != null) {
 					sb.append(line);
 				}
-				br.close();
-				in.close();
 
 				response = new HttpResponse();
 				response.setEntity(sb.toString());
@@ -166,8 +217,29 @@ public class HttpUtils {
 				e.printStackTrace();
 				mListener.onFail(e);
 			} finally {
-				if (urlConnection != null)
-					urlConnection.disconnect();
+				try {
+					osw.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				} finally {
+					try {
+						if (br != null)
+							br.close();
+					} catch (IOException e) {
+						e.printStackTrace();
+					} finally {
+						try {
+							if (in != null)
+								in.close();
+						} catch (IOException e) {
+							e.printStackTrace();
+						} finally {
+							if (urlConnection != null)
+								urlConnection.disconnect();
+						}
+					}
+				}
+
 			}
 		}
 
@@ -177,6 +249,12 @@ public class HttpUtils {
 
 	}
 
+	/**
+	 * get Task
+	 * 
+	 * @author Yang Tao
+	 * 
+	 */
 	private static class HttpGet implements Runnable {
 
 		public HttpGet(String address, HttpListener l) {
@@ -190,6 +268,8 @@ public class HttpUtils {
 			StringBuilder sb = new StringBuilder();
 			HttpURLConnection urlConnection = null;
 			URL url = null;
+			InputStream in = null;
+			BufferedReader br = null;
 
 			try {
 				url = new URL(mURL);
@@ -198,10 +278,9 @@ public class HttpUtils {
 				setURLConnectionParameters("get", urlConnection);
 
 				urlConnection.connect();
-				InputStream in = urlConnection.getInputStream();
+				in = urlConnection.getInputStream();
 
-				BufferedReader br = new BufferedReader(
-						new InputStreamReader(in));
+				br = new BufferedReader(new InputStreamReader(in));
 
 				String line = null;
 				while ((line = br.readLine()) != null) {
@@ -213,22 +292,278 @@ public class HttpUtils {
 				response = new HttpResponse();
 				response.setEntity(sb.toString());
 				response.setStatus(urlConnection.getResponseCode());
-
-				mListener.onSuccess(response);
-			} catch (MalformedURLException e) {
+				if (mListener != null)
+					mListener.onSuccess(response);
+			} catch (Exception e) {
 				e.printStackTrace();
-				mListener.onFail(e);
-			} catch (IOException e) {
-				e.printStackTrace();
-				mListener.onFail(e);
+				if (mListener != null)
+					mListener.onFail(e);
 			} finally {
-				if (urlConnection != null)
-					urlConnection.disconnect();
+
+				try {
+					if (br != null)
+						br.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				} finally {
+					try {
+						if (in != null)
+							in.close();
+					} catch (IOException e) {
+						e.printStackTrace();
+					} finally {
+						if (urlConnection != null)
+							urlConnection.disconnect();
+					}
+				}
+
 			}
 		}
 
 		private String mURL;
 		private HttpListener mListener;
+	}
+
+	/**
+	 * download file task
+	 * 
+	 * @author YangTao
+	 * 
+	 */
+	private static class HttpDownloaderTast implements Runnable {
+
+		public HttpDownloaderTast(String url, HttpDownloadListener l,
+				String path, String fileName) {
+			mListener = l;
+			mUrl = url;
+			if (!path.endsWith(File.separator))
+				path = path + File.separator;
+			mPath = path + fileName;
+
+			buffer = new byte[8 * 1024];
+
+			mFile = new File(mPath);
+
+		}
+
+		@Override
+		public void run() {
+			InputStream in = null;
+			OutputStream out = null;
+			HttpURLConnection conn = null;
+			try {
+				mFile.createNewFile();
+				URL url = new URL(mUrl);
+				conn = (HttpURLConnection) url.openConnection();
+
+				conn.setConnectTimeout(10000);
+				conn.setReadTimeout(20000);
+				conn.connect();
+
+				fileSize = conn.getHeaderFieldInt("Content-Length", -1);
+				if (mListener != null) {
+					if (fileSize >= 0) {
+						mListener.onDownloadStart(fileSize);
+					} else {
+						// for chunked transfer encoding
+						mListener.onDownloadStart(-1);
+					}
+				}
+
+				in = conn.getInputStream();
+				out = new FileOutputStream(mFile);
+				int downloadSize = 0;
+				for (;;) {
+					int bytes = in.read(buffer);
+					if (bytes == -1) {
+						break;
+					}
+
+					downloadSize += bytes;
+					out.write(buffer, 0, bytes);
+					if (mListener != null) {
+						mListener.onDownloading(downloadSize);
+					}
+
+				}
+
+				out.flush();
+
+				if (mListener != null) {
+					mListener.onDownloadSuccess();
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+				if (mListener != null) {
+					mListener.onDownloadFailed(e);
+				}
+			} finally {
+
+				try {
+					if (in != null) {
+						in.close();
+					}
+				} catch (IOException e) {
+				} finally {
+					try {
+						if (out != null) {
+							out.close();
+						}
+					} catch (IOException e) {
+					} finally {
+						if (conn != null)
+							conn.disconnect();
+					}
+				}
+			}
+		}
+
+		protected byte[] buffer;
+
+		private String mUrl;
+		private HttpDownloadListener mListener;
+		private String mPath;
+
+		private File mFile;
+
+		private long fileSize;
+
+	}
+
+	public static class HttpPostFile implements Runnable {
+		private List<File> mFiles;
+		private String mUrl;
+		private Map<String, String> mPostdata;
+		private HttpUploadFileListener mListener;
+
+		public HttpPostFile(String url, List<File> file,
+				Map<String, String> postData, HttpUploadFileListener listener) {
+			mUrl = url;
+			mFiles = file;
+			mPostdata = postData;
+			mListener = listener;
+		}
+
+		@Override
+		public void run() {
+			URL postURL;
+			DataOutputStream dos = null;
+			HttpResponse response = null;
+			InputStream in = null;
+			BufferedReader br = null;
+			HttpURLConnection urlConnection = null;
+			try {
+				postURL = new URL(mUrl);
+
+				urlConnection = (HttpURLConnection) postURL.openConnection();
+
+				urlConnection.setRequestMethod("POST");
+				urlConnection.setDoOutput(true);
+				urlConnection.setDoInput(true);
+				urlConnection.setUseCaches(false);
+
+				urlConnection.setRequestProperty("Connection", "Keep-Alive");
+				urlConnection.setRequestProperty("Charset", CHARSET);
+				urlConnection.setRequestProperty("Content-Type",
+						MUTIPART_FORMDATA + ";boundary=" + BOUNDARY);
+
+				dos = new DataOutputStream(urlConnection.getOutputStream());
+
+				String formdataNormal = buildDataformPostdata(mPostdata);
+				if (formdataNormal != null) {
+					dos.writeUTF(formdataNormal);
+				}
+
+				long allFileSize = 0;
+				for (File file : mFiles) {
+					allFileSize += file.length();
+				}
+
+				if (mListener != null) {
+					mListener.onUploadStart(allFileSize);
+				}
+
+				byte[] writeBuffer = new byte[1024 * 2];
+
+				long completeSize = 0;
+				for (File file : mFiles) {
+					StringBuffer sb = new StringBuffer("");
+					sb.append(PREFIX + BOUNDARY + CRLF)
+							.append("Content-Disposition: form-data;"
+									+ " name=\"" + "file" + "\";"
+									+ "filename=\"" + file.getName() + "\""
+									+ CRLF)
+							.append("Content-Type:" + CONTENTTYPE).append(CRLF)
+							.append(CRLF);
+
+					dos.writeUTF(sb.toString());
+
+					FileInputStream fis = new FileInputStream(file);
+
+					int len = 0;
+
+					while ((len = fis.read(writeBuffer)) != -1) {
+						dos.write(writeBuffer, 0, len);
+						completeSize += len;
+
+						if (mListener != null) {
+							mListener.onUploading(completeSize);
+						}
+					}
+					dos.writeUTF(CRLF);
+					fis.close();
+				}
+
+				dos.writeUTF(PREFIX + BOUNDARY + PREFIX + CRLF);
+				dos.flush();
+
+				StringBuffer sb = new StringBuffer();
+				in = urlConnection.getInputStream();
+				br = new BufferedReader(new InputStreamReader(in));
+
+				String line = null;
+				while ((line = br.readLine()) != null) {
+					sb.append(line);
+				}
+
+				response = new HttpResponse();
+				response.setEntity(sb.toString());
+				response.setStatus(urlConnection.getResponseCode());
+
+				mListener.onSuccess(response);
+
+			} catch (Exception e) {
+				if (mListener != null) {
+					mListener.onFail(e);
+				}
+			} finally {
+				try {
+					if (dos != null)
+						dos.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				} finally {
+
+					try {
+						if (br != null)
+							br.close();
+					} catch (IOException e) {
+						e.printStackTrace();
+					} finally {
+						try {
+							if (in != null)
+								in.close();
+						} catch (IOException e) {
+							e.printStackTrace();
+						} finally {
+							if (urlConnection != null)
+								urlConnection.disconnect();
+						}
+					}
+				}
+			}
+		}
+
 	}
 
 	private static void setURLConnectionParameters(String method,
@@ -255,5 +590,27 @@ public class HttpUtils {
 			}
 			urlConnection.setUseCaches(false);
 		}
+	}
+
+	private static String buildDataformPostdata(Map<String, String> postData) {
+
+		if (postData != null) {
+			Iterator<Entry<String, String>> itr = postData.entrySet()
+					.iterator();
+
+			StringBuilder builder = new StringBuilder();
+
+			while (itr.hasNext()) {
+				Entry<String, String> entry = itr.next();
+
+				builder.append(PREFIX + BOUNDARY + CRLF);
+				builder.append("Content-Disposition:form-data;name=\""
+						+ entry.getKey() + "\"" + CRLF + CRLF);
+				builder.append(entry.getValue() + CRLF);
+			}
+			return builder.toString();
+		}
+		return null;
+
 	}
 }
