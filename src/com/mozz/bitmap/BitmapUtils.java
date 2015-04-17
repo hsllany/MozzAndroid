@@ -75,8 +75,8 @@ public class BitmapUtils {
 	 *            reqHeight
 	 * @return Bitmap
 	 */
-	public synchronized Bitmap decodeBitmapFromFilePath(String file_name,
-			int reqWidth, int reqHeight, int inSampleSize) {
+	public synchronized final static Bitmap decodeBitmapFromFilePath(
+			String file_name, int reqWidth, int reqHeight, int inSampleSize) {
 		Bitmap temp = null;
 		final BitmapFactory.Options options = new BitmapFactory.Options();
 		options.inJustDecodeBounds = true;
@@ -117,8 +117,8 @@ public class BitmapUtils {
 	 *            reqHeight
 	 * @return Bitmap
 	 */
-	public Bitmap decodeBitmapFromFile(File file, int reqWidth,
-			int reqHeight, int inSampleSize) {
+	public synchronized final static Bitmap decodeBitmapFromFile(File file,
+			int reqWidth, int reqHeight, int inSampleSize) {
 		Bitmap temp = null;
 		final BitmapFactory.Options options = new BitmapFactory.Options();
 		options.inJustDecodeBounds = true;
@@ -154,6 +154,7 @@ public class BitmapUtils {
 
 	/**
 	 * 获取照片旋转角度
+	 * 
 	 * @param filePath
 	 * @return degree
 	 */
@@ -183,6 +184,7 @@ public class BitmapUtils {
 
 	/**
 	 * 获取图片Exif信息
+	 * 
 	 * @param filePath
 	 * @return ExifInterface
 	 */

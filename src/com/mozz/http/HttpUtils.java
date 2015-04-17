@@ -16,6 +16,7 @@ import java.net.ProtocolException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +24,8 @@ import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import android.util.Log;
 
 /**
  * Http tools for Android application
@@ -114,33 +117,36 @@ public class HttpUtils {
 
 	public void download(String url, HttpDownloadListener l, String path,
 			String fileName) {
-		httpExecutor.execute(new HttpDownloaderTast(url, l, path, fileName));
+		httpExecutor.execute(new HttpDownloaderTask(url, l, path, fileName));
 	}
 
 	public String download(String url, HttpDownloadListener l, String pathOnly) {
 		String fileName = "MozzFiles_" + System.currentTimeMillis() + ".mozz";
 		httpExecutor
-				.execute(new HttpDownloaderTast(url, l, pathOnly, fileName));
+				.execute(new HttpDownloaderTask(url, l, pathOnly, fileName));
 		return fileName;
 	}
 
 	public void upload(String url, HttpUploadFileListener l,
-			List<File> fileList, Map<String, String> postData) {
+			Map<String, File> fileList, Map<String, String> postData) {
 		httpExecutor.execute(new HttpPostFile(url, fileList, postData, l));
 	}
 
 	public void upload(String url, HttpUploadFileListener l, File file,
 			Map<String, String> postData) {
-		List<File> fileList = new ArrayList<File>();
+		Map<String, File> fileList = new HashMap<String, File>();
+		fileList.put("file", file);
 		upload(url, l, fileList, postData);
 	}
 
-	public void upload(String url, HttpUploadFileListener l, List<File> fileList) {
+	public void upload(String url, HttpUploadFileListener l,
+			Map<String, File> fileList) {
 		upload(url, l, fileList, null);
 	}
 
 	public void upload(String url, HttpUploadFileListener l, File file) {
-		List<File> fileList = new ArrayList<File>();
+		Map<String, File> fileList = new HashMap<String, File>();
+		fileList.put("file", file);
 		upload(url, l, fileList);
 	}
 
@@ -330,20 +336,23 @@ public class HttpUtils {
 	 * @author YangTao
 	 * 
 	 */
-	private static class HttpDownloaderTast implements Runnable {
+	private static class HttpDownloaderTask implements Runnable {
 
-		public HttpDownloaderTast(String url, HttpDownloadListener l,
+		public HttpDownloaderTask(String url, HttpDownloadListener l,
 				String path, String fileName) {
 			mListener = l;
 			mUrl = url;
 			if (!path.endsWith(File.separator))
 				path = path + File.separator;
 			mPath = path + fileName;
-
+			
 			buffer = new byte[8 * 1024];
-
+			File dir = new File(path);
+			if (!dir.exists()) {
+				dir.mkdirs();
+			}
+			
 			mFile = new File(mPath);
-
 		}
 
 		@Override
@@ -431,15 +440,15 @@ public class HttpUtils {
 	}
 
 	private static class HttpPostFile implements Runnable {
-		private List<File> mFiles;
+		private Map<String, File> mFiles;
 		private String mUrl;
 		private Map<String, String> mPostdata;
 		private HttpUploadFileListener mListener;
 
-		public HttpPostFile(String url, List<File> file,
+		public HttpPostFile(String url, Map<String, File> files,
 				Map<String, String> postData, HttpUploadFileListener listener) {
 			mUrl = url;
-			mFiles = file;
+			mFiles = files;
 			mPostdata = postData;
 			mListener = listener;
 		}
@@ -471,11 +480,16 @@ public class HttpUtils {
 
 				String formdataNormal = buildDataformPostdata(mPostdata);
 				if (formdataNormal != null) {
-					dos.writeUTF(formdataNormal);
+					dos.write(formdataNormal.getBytes());
 				}
 
 				long allFileSize = 0;
-				for (File file : mFiles) {
+
+				Iterator<Entry<String, File>> itr = mFiles.entrySet()
+						.iterator();
+				while (itr.hasNext()) {
+					Entry<String, File> entry = itr.next();
+					File file = entry.getValue();
 					allFileSize += file.length();
 				}
 
@@ -486,17 +500,23 @@ public class HttpUtils {
 				byte[] writeBuffer = new byte[1024 * 2];
 
 				long completeSize = 0;
-				for (File file : mFiles) {
+
+				itr = mFiles.entrySet().iterator();
+				while (itr.hasNext()) {
+					Entry<String, File> entry = itr.next();
+
+					File file = entry.getValue();
+					String key = entry.getKey();
+
 					StringBuffer sb = new StringBuffer("");
 					sb.append(PREFIX + BOUNDARY + CRLF)
 							.append("Content-Disposition: form-data;"
-									+ " name=\"" + "file" + "\";"
-									+ "filename=\"" + file.getName() + "\""
-									+ CRLF)
+									+ " name=\"" + key + "\";" + "filename=\""
+									+ file.getName() + "\"" + CRLF)
 							.append("Content-Type:" + CONTENTTYPE).append(CRLF)
 							.append(CRLF);
 
-					dos.writeUTF(sb.toString());
+					dos.write(sb.toString().getBytes());
 
 					FileInputStream fis = new FileInputStream(file);
 
@@ -510,11 +530,11 @@ public class HttpUtils {
 							mListener.onUploading(completeSize);
 						}
 					}
-					dos.writeUTF(CRLF);
+					dos.write(CRLF.getBytes());
 					fis.close();
 				}
 
-				dos.writeUTF(PREFIX + BOUNDARY + PREFIX + CRLF);
+				dos.write((PREFIX + BOUNDARY + PREFIX + CRLF).getBytes());
 				dos.flush();
 
 				StringBuffer sb = new StringBuffer();
