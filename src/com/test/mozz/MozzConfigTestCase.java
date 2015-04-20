@@ -1,4 +1,4 @@
-package com.mozz.test;
+package com.test.mozz;
 
 import android.content.Context;
 import android.test.AndroidTestCase;

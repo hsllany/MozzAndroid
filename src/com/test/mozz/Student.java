@@ -1,4 +1,4 @@
-package com.mozz.test;
+package com.test.mozz;
 
 import com.mozz.sqlite.Ingnore;
 import com.mozz.sqlite.Model;

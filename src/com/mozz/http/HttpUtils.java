@@ -10,11 +10,13 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -341,17 +343,17 @@ public class HttpUtils {
 		public HttpDownloaderTask(String url, HttpDownloadListener l,
 				String path, String fileName) {
 			mListener = l;
-			mUrl = url;
+			mUrl = urlEncording(url);
 			if (!path.endsWith(File.separator))
 				path = path + File.separator;
 			mPath = path + fileName;
-			
+
 			buffer = new byte[8 * 1024];
 			File dir = new File(path);
 			if (!dir.exists()) {
 				dir.mkdirs();
 			}
-			
+
 			mFile = new File(mPath);
 		}
 
@@ -391,8 +393,9 @@ public class HttpUtils {
 					downloadSize += bytes;
 					out.write(buffer, 0, bytes);
 					if (mListener != null) {
-						mListener.onDownloading(downloadSize,(float)downloadSize/(float)fileSize);
-						Log.d("Downloading", ""+downloadSize);
+
+						mListener.onDownloading(downloadSize,
+								(float) downloadSize / (float) fileSize);
 					}
 
 				}
@@ -611,6 +614,23 @@ public class HttpUtils {
 			}
 			urlConnection.setUseCaches(false);
 		}
+	}
+
+	private static String urlEncording(String url) {
+		String resultUrl = url;
+		try {
+
+			int lastSlash = url.lastIndexOf("/");
+			String pureUrl = url.substring(0, lastSlash + 1);
+			String fileName = URLEncoder.encode(url.substring(lastSlash + 1),
+					"UTF-8");
+			resultUrl = pureUrl + fileName;
+
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		}
+		return resultUrl;
+
 	}
 
 	private static String buildDataformPostdata(Map<String, String> postData) {
