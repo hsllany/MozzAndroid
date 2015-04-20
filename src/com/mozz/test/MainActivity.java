@@ -9,58 +9,44 @@ import android.util.Log;
 import com.mozz.cache.FileCache;
 import com.mozz.cache.GetCallback;
 import com.mozz.cache.PutCallback;
+import com.mozz.http.HttpDownloadListener;
+import com.mozz.http.HttpUtils;
 import com.mozz.utils.MozzConfig;
+import com.mozz.utils.SDCard;
 
 public class MainActivity extends Activity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		Player test = new Player(System.currentTimeMillis());
-		FileCache cache = FileCache.instance(this,
-				new File(MozzConfig.getAppAbsoluteDir(this)));
+		HttpUtils http = new HttpUtils();
 
-		cache.putWithVersion("haha", test, 1L, null);
+		http.download(
+				"http:\/\/182.92.169.194\/shitu_upload\/¿´¿´1429260219154.png",
+				new HttpDownloadListener() {
 
-		cache.putWithExpireTime("he", test, 5000, new PutCallback() {
+					@Override
+					public void onDownloading(long downloadSize) {
+						Log.d("DownloadTest", downloadSize + "");
 
-			@Override
-			public void onSuccess() {
-				Log.d("CACHE", "success");
+					}
 
-			}
+					@Override
+					public void onDownloadSuccess() {
+						// TODO Auto-generated method stub
 
-			@Override
-			public void onFail() {
-				Log.d("CACHE", "fail");
+					}
 
-			}
-		});
+					@Override
+					public void onDownloadStart(long fileSize) {
+						// TODO Auto-generated method stub
 
-		try {
-			Thread.sleep(1000);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+					}
 
-		Log.d("MOZZ", "hell ow");
+					@Override
+					public void onDownloadFailed(Exception e) {
+						// TODO Auto-generated method stub
 
-		cache.getOrOldversion("haha", 2L, new GetCallback() {
-
-			@Override
-			public void onSuccess(Object item) {
-				if (item != null) {
-					Log.d("CACHE", "get" + ((Player) item).mId);
-				} else {
-					Log.d("CACHE", "null");
-				}
-
-			}
-
-			@Override
-			public void onFail() {
-				Log.d("CACHE", "failed");
-
-			}
-		});
+					}
+				}, SDCard.sdCardDir(), "test.png");
 	}
 }
