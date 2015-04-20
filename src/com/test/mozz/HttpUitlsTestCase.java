@@ -1,4 +1,4 @@
-package com.mozz.test;
+package com.test.mozz;
 
 import android.test.AndroidTestCase;
 import android.util.Log;
