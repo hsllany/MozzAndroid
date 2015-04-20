@@ -392,6 +392,7 @@ public class HttpUtils {
 					out.write(buffer, 0, bytes);
 					if (mListener != null) {
 						mListener.onDownloading(downloadSize,(float)downloadSize/(float)fileSize);
+						Log.d("Downloading", ""+downloadSize);
 					}
 
 				}
