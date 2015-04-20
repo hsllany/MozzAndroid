@@ -35,34 +35,7 @@ public class HttpUitlsTestCase extends AndroidTestCase {
 
 	public void downloadTest() {
 		HttpUtils http = new HttpUtils();
-		http.download(
-				"http://182.92.169.194/shitu_upload/%E7%9C%8B%E7%9C%8B1429261862406.png",
-				new HttpDownloadListener() {
 
-					@Override
-					public void onDownloading(long downloadSize) {
-						Log.d("DownloadTest", downloadSize + "");
-
-					}
-
-					@Override
-					public void onDownloadSuccess() {
-						// TODO Auto-generated method stub
-
-					}
-
-					@Override
-					public void onDownloadStart(long fileSize) {
-						// TODO Auto-generated method stub
-
-					}
-
-					@Override
-					public void onDownloadFailed(Exception e) {
-						// TODO Auto-generated method stub
-
-					}
-				}, SDCard.sdCardDir(), "test.png");
 	}
 
 }
