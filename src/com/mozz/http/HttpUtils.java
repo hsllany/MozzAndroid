@@ -226,7 +226,9 @@ public class HttpUtils {
 				mListener.onFail(e);
 			} finally {
 				try {
-					osw.close();
+					if (osw != null) {
+						osw.close();
+					}
 				} catch (IOException e) {
 					e.printStackTrace();
 				} finally {
@@ -530,7 +532,8 @@ public class HttpUtils {
 						completeSize += len;
 
 						if (mListener != null) {
-							mListener.onUploading(completeSize);
+							mListener.onUploading(completeSize,
+									(float) completeSize / (float) allFileSize);
 						}
 					}
 					dos.write(CRLF.getBytes());

@@ -11,9 +11,13 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.http.NameValuePair;
+
+import com.mozz.utils.SystemInfo;
 
 import android.content.Context;
 import android.content.pm.PackageInfo;
@@ -51,10 +55,10 @@ public class CrashHandler implements UncaughtExceptionHandler {
 		}
 		return m_crashHandler;
 	}
-	
+
 	private CrashingListener listener;
 
-	public void init(Context context,CrashingListener listener) {
+	public void init(Context context, CrashingListener listener) {
 		this.listener = listener;
 		if (Environment.getExternalStorageState().equals(
 				Environment.MEDIA_MOUNTED)) {
@@ -108,43 +112,34 @@ public class CrashHandler implements UncaughtExceptionHandler {
 		}
 
 		// Toast显示异常信息
-//		new Thread() {
-//			@Override
-//			public void run() {
-//				Looper.prepare();
-//				Toast.makeText(mContext, "抱歉，发现异常,2秒后系统将自动关闭",
-//						Toast.LENGTH_SHORT).show();
-//				System.exit(0);
-//				Looper.loop();
-//			}
-//		}.start();
+		// new Thread() {
+		// @Override
+		// public void run() {
+		// Looper.prepare();
+		// Toast.makeText(mContext, "抱歉，发现异常,2秒后系统将自动关闭",
+		// Toast.LENGTH_SHORT).show();
+		// System.exit(0);
+		// Looper.loop();
+		// }
+		// }.start();
 		// 收集设备参数信息
 		collectDeviceInfo(mContext);
 		// 保存日志文件
 		String fileName = saveCrashInfo2File(ex);
 		// 发送日志到服务器
-		if (listener!=null) {
+		if (listener != null) {
 			listener.onCrashLogSaved(fileName);
 		}
-//		sendLogToServer(fileName);
+		// sendLogToServer(fileName);
 		return true;
 	}
 
 	private void collectDeviceInfo(Context ctx) {
-		try {
-			PackageManager pm = ctx.getPackageManager();
-			PackageInfo pi = pm.getPackageInfo(ctx.getPackageName(),
-					PackageManager.GET_ACTIVITIES);
-			if (pi != null) {
-				String versionName = pi.versionName == null ? "null"
-						: pi.versionName;
-				String versionCode = pi.versionCode + "";
-				infos.put("versionName", versionName);
-				infos.put("versionCode", versionCode);
-			}
-		} catch (NameNotFoundException e) {
-			Log.e(TAG, "an error occured when collect package info", e);
-		}
+		String versionName = SystemInfo.getPackageVersionName(ctx) == null ? "null"
+				: SystemInfo.getPackageVersionName(ctx);
+		String versionCode = SystemInfo.getPackageVersionCode(ctx) + "";
+		infos.put("versionName", versionName);
+		infos.put("versionCode", versionCode);
 		Field[] fields = Build.class.getDeclaredFields();
 		for (Field field : fields) {
 			field.setAccessible(true);
@@ -208,7 +203,7 @@ public class CrashHandler implements UncaughtExceptionHandler {
 		return null;
 	}
 
-	public interface CrashingListener{
+	public interface CrashingListener {
 		public void onCrashLogSaved(String fileName);
 	}
 }
