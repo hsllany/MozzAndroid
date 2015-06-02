@@ -2,10 +2,7 @@ package com.mozz.http;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import android.content.Context;
-
-import com.mozz.utils.MozzConfig;
 import com.mozz.utils.SystemInfo;
 
 public class Upgrader {

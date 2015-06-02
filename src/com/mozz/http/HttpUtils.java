@@ -595,8 +595,8 @@ public class HttpUtils {
 	private static void setURLConnectionParameters(String method,
 			HttpURLConnection urlConnection) {
 
-		urlConnection.setConnectTimeout(2000);
-		urlConnection.setReadTimeout(2000);
+		urlConnection.setConnectTimeout(20000);
+		urlConnection.setReadTimeout(20000);
 
 		if (method.equalsIgnoreCase("get")) {
 			try {
