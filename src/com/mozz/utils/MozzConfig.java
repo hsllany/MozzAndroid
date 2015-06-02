@@ -118,7 +118,7 @@ public class MozzConfig {
 		return false;
 	}
 
-	private static String getMetaData(Context context, String key)
+	public static String getMetaData(Context context, String key)
 			throws NameNotFoundException {
 		String metaData = null;
 
