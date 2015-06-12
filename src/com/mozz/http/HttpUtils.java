@@ -408,6 +408,9 @@ public class HttpUtils {
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
+				if (mFile != null && mFile.exists()) {
+					mFile.delete();
+				}
 				if (mListener != null) {
 					mListener.onDownloadFailed(e);
 				}
