@@ -478,6 +478,7 @@ public class HttpUtils {
 				urlConnection.setDoOutput(true);
 				urlConnection.setDoInput(true);
 				urlConnection.setUseCaches(false);
+				urlConnection.setChunkedStreamingMode(1024);
 
 				urlConnection.setRequestProperty("Connection", "Keep-Alive");
 				urlConnection.setRequestProperty("Charset", CHARSET);
