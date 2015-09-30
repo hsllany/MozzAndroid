@@ -40,7 +40,7 @@ public class Upgrader {
 							}
 							mDownloadUrl = jsonObject.getString("downloadurl");
 							mUpgradeListener.onNewVersion(forceUpgrade,serverCode,
-									serverVersion, serverVersionDescription);
+									serverVersion, serverVersionDescription,mDownloadUrl);
 						} else {
 							mUpgradeListener.onNoNewVersion();
 						}

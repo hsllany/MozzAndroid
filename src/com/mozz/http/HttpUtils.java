@@ -529,23 +529,24 @@ public class HttpUtils {
 					FileInputStream fis = new FileInputStream(file);
 
 					int len = 0;
-
+					int j = 0;
 					while ((len = fis.read(writeBuffer)) != -1) {
 						dos.write(writeBuffer, 0, len);
+						dos.flush();
 						completeSize += len;
-
-						if (mListener != null) {
+						if (j++ % 5 == 0 && mListener != null)
 							mListener.onUploading(completeSize,
 									(float) completeSize / (float) allFileSize);
-						}
 					}
 					dos.write(CRLF.getBytes());
+
 					fis.close();
 				}
 
 				dos.write((PREFIX + BOUNDARY + PREFIX + CRLF).getBytes());
 				dos.flush();
-
+				if (mListener != null)
+					mListener.onUploading(completeSize, 1);
 				StringBuffer sb = new StringBuffer();
 				in = urlConnection.getInputStream();
 				br = new BufferedReader(new InputStreamReader(in));

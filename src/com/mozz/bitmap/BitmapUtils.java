@@ -98,7 +98,7 @@ public class BitmapUtils {
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		Bitmap final_bitmap = null;
 		if (temp != null) {
-			temp.compress(Bitmap.CompressFormat.JPEG, 70, baos);
+			temp.compress(Bitmap.CompressFormat.PNG, 50, baos);
 			temp.recycle();
 			final_bitmap = BitmapFactory.decodeByteArray(baos.toByteArray(), 0,
 					baos.size());

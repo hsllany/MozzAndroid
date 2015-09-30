@@ -14,7 +14,7 @@ public interface UpgradeListener {
 	 *            , server version description
 	 */
 	public void onNewVersion(boolean forceUpgrade, int serverVersionCode,
-			String serverVersion, String serverVersionDescription);
+			String serverVersion, String serverVersionDescription,String downloadUrl);
 
 	public void onNoNewVersion();
 
