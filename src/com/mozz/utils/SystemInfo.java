@@ -356,5 +356,15 @@ public class SystemInfo {
 			return "";
 		}
 	}
+	
+	public static String getDeviceMAC(Context context) {
+		WifiManager wifiManager = (WifiManager) context
+				.getSystemService(Context.WIFI_SERVICE);
+		WifiInfo wInfo = wifiManager.getConnectionInfo();
+		String macAddress = wInfo.getMacAddress();
+
+		return macAddress;
+	}
+
 
 }
