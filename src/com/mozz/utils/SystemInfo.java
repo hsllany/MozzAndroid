@@ -2,6 +2,7 @@ package com.mozz.utils;
 
 import java.lang.reflect.Method;
 import java.util.Calendar;
+
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
@@ -14,6 +15,7 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.provider.Settings;
@@ -356,7 +358,7 @@ public class SystemInfo {
 			return "";
 		}
 	}
-	
+
 	public static String getDeviceMAC(Context context) {
 		WifiManager wifiManager = (WifiManager) context
 				.getSystemService(Context.WIFI_SERVICE);
@@ -365,6 +367,5 @@ public class SystemInfo {
 
 		return macAddress;
 	}
-
 
 }
