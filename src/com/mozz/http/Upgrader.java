@@ -7,10 +7,16 @@ import com.mozz.utils.SystemInfo;
 
 public class Upgrader {
 
+	private static final HttpParameter UpgradeParamter;
+
+	static {
+		UpgradeParamter = new HttpParameter(5000, 5000);
+	}
+
 	public Upgrader(String upgradeURL, Context context) {
 		mUpgradeUrl = upgradeURL;
 		mContext = context;
-		mHttp = new DownloaderHttpUtils();
+		mHttp = new HttpUtils();
 	}
 
 	public void setOnUpgradeListener(UpgradeListener upgradeListener) {
@@ -35,12 +41,13 @@ public class Upgrader {
 
 						if (SystemInfo.getPackageVersionCode(mContext) < serverCode) {
 							boolean forceUpgrade = false;
-							if (forceCode==1) {
+							if (forceCode == 1) {
 								forceUpgrade = true;
 							}
 							mDownloadUrl = jsonObject.getString("downloadurl");
-							mUpgradeListener.onNewVersion(forceUpgrade,serverCode,
-									serverVersion, serverVersionDescription,mDownloadUrl);
+							mUpgradeListener.onNewVersion(forceUpgrade,
+									serverCode, serverVersion,
+									serverVersionDescription, mDownloadUrl);
 						} else {
 							mUpgradeListener.onNoNewVersion();
 						}
@@ -61,7 +68,7 @@ public class Upgrader {
 					mUpgradeListener.onCheckFailed();
 				}
 			}
-		});
+		}, UpgradeParamter);
 	}
 
 	public void download(HttpDownloadListener l, String path, String fileName)
@@ -71,12 +78,12 @@ public class Upgrader {
 					"download URL is null, please make sure that download() can be only invoked after checkNewVersion() success which is guaranteed by the onNewVersion().");
 		}
 
-		mHttp.download(mDownloadUrl, l, path, fileName);
+		mHttp.download(mDownloadUrl, l, path, fileName, UpgradeParamter);
 	}
 
 	private String mUpgradeUrl;
 	private String mDownloadUrl;
 	private Context mContext;
-	private DownloaderHttpUtils mHttp;
+	private HttpUtils mHttp;
 	private UpgradeListener mUpgradeListener;
 }
