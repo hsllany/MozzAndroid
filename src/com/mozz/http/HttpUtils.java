@@ -253,8 +253,7 @@ public class HttpUtils {
 	 * should {@code shutdown()}
 	 */
 	private static void release() {
-		mInstanceCount.decrementAndGet();
-		if (mInstanceCount.get() == 0) {
+		if (mInstanceCount.decrementAndGet() == 0) {
 			httpExecutor.shutdown();
 			httpExecutor = null;
 		}
