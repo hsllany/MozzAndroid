@@ -15,12 +15,9 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
-import java.net.URLConnection;
 import java.net.URLEncoder;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
@@ -30,71 +27,114 @@ import java.util.concurrent.atomic.AtomicInteger;
 import android.util.Log;
 
 /**
- * Http tools for Android application
+ * HTTP tools for Android application
  * 
- * @author Yang & Zd <hsllany@163.com & zhangdao@>
+ * @author hsllany
  * 
  */
 public class HttpUtils {
+	/**
+	 * Executor parameters, reference of {@code AsyncTask}
+	 */
+	private static final int CPU_COUNT = Runtime.getRuntime().availableProcessors();
+	private static final int MAXIMUM_POOL_SIZE = CPU_COUNT * 2 + 1;
 
+	private static final int GET = 0x01;
+	private static final int POST = 0x02;
+	private static final int DOWNLOAD_FILE = 0x05;
+	private static final int UPLOAD_FILE = 0x06;
+
+	/**
+	 * for only debug
+	 */
+	private static final boolean DEBUG = false;
 	private static final String DEBUG_TAG = "HttpUtils";
 
-	private static final String AGENT = "mozz";
-
+	/**
+	 * Post data chars
+	 */
 	private static final String CRLF = "\r\n";
-
 	private final static String BOUNDARY = "MOZZEEDN9JOFxnp3Q8_2lXBfEexEE_Rnsey";
-
 	private final static String PREFIX = "--";
-
 	private final static String MUTIPART_FORMDATA = "multipart/form-data";
-
 	private final static String CHARSET = "UTF-8";
-
 	private final static String CONTENTTYPE = "application/octet-stream";
 
 	private static AtomicInteger mInstanceCount = new AtomicInteger(0);
+
 	/**
 	 * The executor for run http request
 	 */
 	protected static ExecutorService httpExecutor;
 
+	/**
+	 * global HttpParameter
+	 */
+	protected static HttpParameter globleParameters;
+
+	/**
+	 * default HttpParameter
+	 */
+	protected static final HttpParameter defaultParamter;
+
+	static {
+		defaultParamter = new HttpParameter(3000, 5000);
+		globleParameters = defaultParamter;
+	}
+
 	public HttpUtils() {
 		if (httpExecutor == null) {
-			httpExecutor = Executors.newCachedThreadPool();
+			httpExecutor = Executors.newFixedThreadPool(MAXIMUM_POOL_SIZE);
 			mInstanceCount.addAndGet(1);
 		}
 	}
 
 	/**
-	 * Http Get function
+	 * update global http parameter
 	 * 
-	 * @param url
-	 *            , string
-	 * @param l
-	 *            , HttpListener
+	 * @param parameter
 	 */
-	public void get(String url, HttpListener l) {
-		httpExecutor.execute(new HttpGet(url, l));
+	public static void updateGlobalParameter(HttpParameter parameter) {
+		if (parameter != null)
+			globleParameters = parameter;
+		else
+			throw new NullPointerException("HttpParameter can't be null.");
 	}
 
 	/**
-	 * Http Post function
+	 * Get method using global parameter.
+	 * 
+	 * @see #updateGlobalParameter(HttpParameter)
+	 * @see #get(String, HttpListener, HttpParameter)
+	 */
+	public void get(String url, HttpListener l) {
+		httpExecutor.execute(new HttpGet(url, l, globleParameters));
+	}
+
+	/**
+	 * get method, using specific HttpParameter.
 	 * 
 	 * @param url
-	 *            , String
 	 * @param l
-	 *            , HttpListener
-	 * @param parameters
-	 *            , HashMap<String, String> that contains name field and value
-	 *            field of post data;
+	 * @param parameter
 	 */
-	public void post(String url, HttpListener l, Map<String, String> parameters) {
+	public void get(String url, HttpListener l, HttpParameter parameter) {
+		httpExecutor.execute(new HttpGet(url, l, parameter));
+	}
 
-		if (parameters != null) {
+	/**
+	 * Post method using specific HttpParameter
+	 * 
+	 * @see #post(String, HttpListener, Map)
+	 * @param postData
+	 *            , Map<String, String> that contains name field and value field
+	 *            of post data;
+	 */
+	public void post(String url, HttpListener l, Map<String, String> postData, HttpParameter parameter) {
+
+		if (postData != null) {
 			StringBuilder sb = new StringBuilder();
-			Iterator<Map.Entry<String, String>> itr = parameters.entrySet()
-					.iterator();
+			Iterator<Map.Entry<String, String>> itr = postData.entrySet().iterator();
 
 			int i = 0;
 
@@ -110,72 +150,116 @@ public class HttpUtils {
 				i++;
 			}
 
-			httpExecutor.execute(new HttpPost(url, l, sb.toString()));
+			httpExecutor.execute(new HttpPost(url, l, sb.toString(), parameter));
 		} else {
-			httpExecutor.execute(new HttpPost(url, l, null));
+			httpExecutor.execute(new HttpPost(url, l, null, parameter));
 		}
-
 	}
 
-	public void download(String url, HttpDownloadListener l, String path,
-			String fileName) {
-		httpExecutor.execute(new HttpDownloaderTask(url, l, path, fileName));
+	/**
+	 * Post method using global http parameter
+	 * 
+	 * @see #post(String, HttpListener, Map, HttpParameter)
+	 * @see #updateGlobalParameter(HttpParameter)
+	 */
+	public void post(String url, HttpListener l, Map<String, String> postData) {
+		this.post(url, l, postData, globleParameters);
 	}
 
-	public String download(String url, HttpDownloadListener l, String pathOnly) {
-		String fileName = "MozzFiles_" + System.currentTimeMillis() + ".mozz";
-		httpExecutor
-				.execute(new HttpDownloaderTask(url, l, pathOnly, fileName));
-		return fileName;
+	/**
+	 * Download file and store it at 'path/fileName', using specific http
+	 * parameter
+	 * 
+	 * @see #download(String, HttpDownloadListener, String, String)
+	 * 
+	 */
+	public void download(String url, HttpDownloadListener l, String path, String fileName, HttpParameter parameter) {
+		httpExecutor.execute(new HttpDownloaderTask(url, l, path, fileName, parameter));
 	}
 
-	public void upload(String url, HttpUploadFileListener l,
-			Map<String, File> fileList, Map<String, String> postData) {
-		httpExecutor.execute(new HttpPostFile(url, fileList, postData, l));
+	/**
+	 * Download file and store it at 'path/fileName', using specific http
+	 * parameter
+	 * 
+	 * @see #download(String, HttpDownloadListener, String, String,
+	 *      HttpParameter)
+	 * @see #updateGlobalParameter(HttpParameter)
+	 */
+	public void download(String url, HttpDownloadListener l, String path, String fileName) {
+		this.download(url, l, path, fileName, globleParameters);
 	}
 
-	public void upload(String url, HttpUploadFileListener l, File file,
-			Map<String, String> postData) {
+	/**
+	 * Post file and data to URL with fileList
+	 * 
+	 * @see #upload(String, HttpUploadFileListener, Map, Map)
+	 * @see #upload(String, HttpUploadFileListener, File)
+	 * @see #upload(String, HttpUploadFileListener, File, HttpParameter)
+	 * 
+	 */
+	public void upload(String url, HttpUploadFileListener l, Map<String, File> fileList, Map<String, String> postData, HttpParameter parameter) {
+		httpExecutor.execute(new HttpPostFile(url, fileList, postData, l, parameter));
+	}
+
+	/**
+	 * Post single file to URL
+	 * 
+	 * @see #upload(String, HttpUploadFileListener, Map, Map, HttpParameter)
+	 * @see #upload(String, HttpUploadFileListener, Map, Map)
+	 * @see #upload(String, HttpUploadFileListener, File)
+	 */
+	public void upload(String url, HttpUploadFileListener l, File file, HttpParameter parameter) {
 		Map<String, File> fileList = new HashMap<String, File>();
 		fileList.put("file", file);
-		upload(url, l, fileList, postData);
+		upload(url, l, fileList, null, parameter);
 	}
 
-	public void upload(String url, HttpUploadFileListener l,
-			Map<String, File> fileList) {
-		upload(url, l, fileList, null);
+	/**
+	 * Post file and data to URL using global http parameter
+	 * 
+	 * @see #upload(String, HttpUploadFileListener, Map, Map, HttpParameter)
+	 * @see #upload(String, HttpUploadFileListener, File, HttpParameter)
+	 * @see #upload(String, HttpUploadFileListener, File)
+	 */
+	public void upload(String url, HttpUploadFileListener l, Map<String, File> fileList, Map<String, String> postData) {
+		this.upload(url, l, fileList, postData, globleParameters);
 	}
 
+	/**
+	 * Post single file to URL using global http parameter
+	 *
+	 * @see #upload(String, HttpUploadFileListener, File, HttpParameter)
+	 * @see #upload(String, HttpUploadFileListener, Map, Map)
+	 * @see #upload(String, HttpUploadFileListener, Map, Map, HttpParameter)
+	 */
 	public void upload(String url, HttpUploadFileListener l, File file) {
-		Map<String, File> fileList = new HashMap<String, File>();
-		fileList.put("file", file);
-		upload(url, l, fileList);
+		this.upload(url, l, file, globleParameters);
 	}
 
 	/**
 	 * If you met any situation that should use full compacity of CPU, you
-	 * should release the HttpUtils
+	 * should {@code shutdown()}
 	 */
 	private static void release() {
-		mInstanceCount.decrementAndGet();
-		if (mInstanceCount.get() == 0) {
+		if (mInstanceCount.decrementAndGet() == 0) {
 			httpExecutor.shutdown();
 			httpExecutor = null;
 		}
 	}
 
 	/**
-	 * @see release()
+	 * Release all resources.
 	 */
-	public void releaseHttp() {
+	public void shutdown() {
 		release();
 	}
 
 	private static class HttpPost implements Runnable {
-		public HttpPost(String address, HttpListener l, String parameters) {
+		public HttpPost(String address, HttpListener l, String postData, HttpParameter httpParameter) {
 			this.mListener = l;
 			this.mURL = address;
-			this.postData = parameters;
+			this.postData = postData;
+			this.parameter = httpParameter;
 		}
 
 		@Override
@@ -190,21 +274,25 @@ public class HttpUtils {
 			try {
 				url = new URL(mURL);
 				urlConnection = (HttpURLConnection) url.openConnection();
-
-				setURLConnectionParameters("post", urlConnection);
+				setURLConnectionParameters(POST, urlConnection, this.parameter);
 
 				if (postData != null && postData.length() > 512)
 					urlConnection.setChunkedStreamingMode(5);
 				urlConnection.connect();
 
 				if (postData != null) {
-					osw = new OutputStreamWriter(
-							urlConnection.getOutputStream(), "UTF-8");
+					osw = new OutputStreamWriter(urlConnection.getOutputStream(), "UTF-8");
 					osw.write(postData);
 					osw.flush();
 				}
 
-				in = urlConnection.getInputStream();
+				int status = urlConnection.getResponseCode();
+
+				if (status >= 400)
+					in = urlConnection.getErrorStream();
+				else
+					in = urlConnection.getInputStream();
+
 				br = new BufferedReader(new InputStreamReader(in));
 
 				String line = null;
@@ -256,20 +344,22 @@ public class HttpUtils {
 		private String mURL;
 		private HttpListener mListener;
 		private String postData;
+		private HttpParameter parameter;
 
 	}
 
 	/**
-	 * get Task
+	 * Get
 	 * 
-	 * @author Yang Tao
-	 * 
+	 * @author shitupublic
+	 *
 	 */
 	private static class HttpGet implements Runnable {
 
-		public HttpGet(String address, HttpListener l) {
+		public HttpGet(String address, HttpListener l, HttpParameter parameter) {
 			this.mURL = address;
 			this.mListener = l;
+			this.parameter = parameter;
 		}
 
 		@Override
@@ -284,11 +374,15 @@ public class HttpUtils {
 			try {
 				url = new URL(mURL);
 				urlConnection = (HttpURLConnection) url.openConnection();
-
-				setURLConnectionParameters("get", urlConnection);
+				setURLConnectionParameters(GET, urlConnection, this.parameter);
 
 				urlConnection.connect();
-				in = urlConnection.getInputStream();
+				int status = urlConnection.getResponseCode();
+
+				if (status >= 400)
+					in = urlConnection.getErrorStream();
+				else
+					in = urlConnection.getInputStream();
 
 				br = new BufferedReader(new InputStreamReader(in));
 
@@ -332,6 +426,7 @@ public class HttpUtils {
 
 		private String mURL;
 		private HttpListener mListener;
+		private HttpParameter parameter;
 	}
 
 	/**
@@ -342,8 +437,7 @@ public class HttpUtils {
 	 */
 	private static class HttpDownloaderTask implements Runnable {
 
-		public HttpDownloaderTask(String url, HttpDownloadListener l,
-				String path, String fileName) {
+		public HttpDownloaderTask(String url, HttpDownloadListener l, String path, String fileName, HttpParameter parameter) {
 			mListener = l;
 			mUrl = urlEncording(url);
 			if (!path.endsWith(File.separator))
@@ -357,6 +451,7 @@ public class HttpUtils {
 			}
 
 			mFile = new File(mPath);
+			this.paramter = parameter;
 		}
 
 		@Override
@@ -368,9 +463,7 @@ public class HttpUtils {
 				mFile.createNewFile();
 				URL url = new URL(mUrl);
 				conn = (HttpURLConnection) url.openConnection();
-
-				conn.setConnectTimeout(10000);
-				conn.setReadTimeout(20000);
+				setURLConnectionParameters(DOWNLOAD_FILE, conn, this.paramter);
 				conn.connect();
 
 				fileSize = conn.getHeaderFieldInt("Content-Length", -1);
@@ -383,7 +476,13 @@ public class HttpUtils {
 					}
 				}
 
-				in = conn.getInputStream();
+				int status = conn.getResponseCode();
+
+				if (status >= 400)
+					in = conn.getErrorStream();
+				else
+					in = conn.getInputStream();
+
 				out = new FileOutputStream(mFile);
 				int downloadSize = 0;
 				for (;;) {
@@ -395,17 +494,13 @@ public class HttpUtils {
 					downloadSize += bytes;
 					out.write(buffer, 0, bytes);
 					if (mListener != null) {
-						mListener.onDownloading(downloadSize, bytes,
-								(float) downloadSize / (float) fileSize);
+						mListener.onDownloading(downloadSize, bytes, (float) downloadSize / (float) fileSize);
 					}
 
 				}
 
 				out.flush();
 
-				if (mListener != null) {
-					mListener.onDownloadSuccess();
-				}
 			} catch (Exception e) {
 				e.printStackTrace();
 				if (mFile != null && mFile.exists()) {
@@ -430,6 +525,10 @@ public class HttpUtils {
 					} finally {
 						if (conn != null)
 							conn.disconnect();
+
+						if (mListener != null) {
+							mListener.onDownloadSuccess();
+						}
 					}
 				}
 			}
@@ -445,6 +544,8 @@ public class HttpUtils {
 
 		private long fileSize;
 
+		private HttpParameter paramter;
+
 	}
 
 	private static class HttpPostFile implements Runnable {
@@ -452,13 +553,15 @@ public class HttpUtils {
 		private String mUrl;
 		private Map<String, String> mPostdata;
 		private HttpUploadFileListener mListener;
+		private HttpParameter parameter;
 
-		public HttpPostFile(String url, Map<String, File> files,
-				Map<String, String> postData, HttpUploadFileListener listener) {
+		public HttpPostFile(String url, Map<String, File> files, Map<String, String> postData, HttpUploadFileListener listener,
+				HttpParameter parameter) {
 			mUrl = url;
 			mFiles = files;
 			mPostdata = postData;
 			mListener = listener;
+			this.parameter = parameter;
 		}
 
 		@Override
@@ -471,20 +574,8 @@ public class HttpUtils {
 			HttpURLConnection urlConnection = null;
 			try {
 				postURL = new URL(mUrl);
-
 				urlConnection = (HttpURLConnection) postURL.openConnection();
-
-				urlConnection.setRequestMethod("POST");
-				urlConnection.setDoOutput(true);
-				urlConnection.setDoInput(true);
-				urlConnection.setUseCaches(false);
-				urlConnection.setChunkedStreamingMode(1024);
-
-				urlConnection.setRequestProperty("Connection", "Keep-Alive");
-				urlConnection.setRequestProperty("Charset", CHARSET);
-				urlConnection.setRequestProperty("Content-Type",
-						MUTIPART_FORMDATA + ";boundary=" + BOUNDARY);
-
+				setURLConnectionParameters(UPLOAD_FILE, urlConnection, this.parameter);
 				dos = new DataOutputStream(urlConnection.getOutputStream());
 
 				String formdataNormal = buildDataformPostdata(mPostdata);
@@ -494,8 +585,7 @@ public class HttpUtils {
 
 				long allFileSize = 0;
 
-				Iterator<Entry<String, File>> itr = mFiles.entrySet()
-						.iterator();
+				Iterator<Entry<String, File>> itr = mFiles.entrySet().iterator();
 				while (itr.hasNext()) {
 					Entry<String, File> entry = itr.next();
 					File file = entry.getValue();
@@ -519,11 +609,8 @@ public class HttpUtils {
 
 					StringBuffer sb = new StringBuffer("");
 					sb.append(PREFIX + BOUNDARY + CRLF)
-							.append("Content-Disposition: form-data;"
-									+ " name=\"" + key + "\";" + "filename=\""
-									+ file.getName() + "\"" + CRLF)
-							.append("Content-Type:" + CONTENTTYPE).append(CRLF)
-							.append(CRLF);
+							.append("Content-Disposition: form-data;" + " name=\"" + key + "\";" + "filename=\"" + file.getName() + "\"" + CRLF)
+							.append("Content-Type:" + CONTENTTYPE).append(CRLF).append(CRLF);
 
 					dos.write(sb.toString().getBytes());
 
@@ -536,8 +623,7 @@ public class HttpUtils {
 						dos.flush();
 						completeSize += len;
 						if (j++ % 5 == 0 && mListener != null)
-							mListener.onUploading(completeSize,
-									(float) completeSize / (float) allFileSize);
+							mListener.onUploading(completeSize, (float) completeSize / (float) allFileSize);
 					}
 					dos.write(CRLF.getBytes());
 
@@ -597,21 +683,22 @@ public class HttpUtils {
 
 	}
 
-	private static void setURLConnectionParameters(String method,
-			HttpURLConnection urlConnection) {
+	private static void setURLConnectionParameters(int methodHint, HttpURLConnection urlConnection, HttpParameter parameter) {
 
-		urlConnection.setConnectTimeout(20000);
-		urlConnection.setReadTimeout(20000);
+		urlConnection.setConnectTimeout(parameter.connectTimeOut);
+		urlConnection.setReadTimeout(parameter.soTimeOut);
+		urlConnection.setRequestProperty("User-Agent", parameter.userAgent);
 
-		if (method.equalsIgnoreCase("get")) {
+		switch (methodHint) {
+		case GET:
 			try {
 				urlConnection.setRequestMethod("GET");
 			} catch (ProtocolException e) {
 				e.printStackTrace();
 			}
 			urlConnection.setUseCaches(false);
-
-		} else if (method.equalsIgnoreCase("POST")) {
+			break;
+		case POST:
 			urlConnection.setDoOutput(true);
 			urlConnection.setDoInput(true);
 			try {
@@ -620,6 +707,25 @@ public class HttpUtils {
 				e.printStackTrace();
 			}
 			urlConnection.setUseCaches(false);
+			break;
+		case UPLOAD_FILE:
+			urlConnection.setConnectTimeout(parameter.connectTimeOut);
+			urlConnection.setReadTimeout(parameter.soTimeOut);
+
+			try {
+				urlConnection.setRequestMethod("POST");
+			} catch (ProtocolException e) {
+			}
+			urlConnection.setDoOutput(true);
+			urlConnection.setDoInput(true);
+			urlConnection.setUseCaches(false);
+			urlConnection.setChunkedStreamingMode(1024);
+
+			urlConnection.setRequestProperty("Connection", "Keep-Alive");
+			urlConnection.setRequestProperty("Charset", CHARSET);
+			urlConnection.setRequestProperty("Content-Type", MUTIPART_FORMDATA + ";boundary=" + BOUNDARY);
+			break;
+		case DOWNLOAD_FILE:
 		}
 	}
 
@@ -629,8 +735,7 @@ public class HttpUtils {
 
 			int lastSlash = url.lastIndexOf("/");
 			String pureUrl = url.substring(0, lastSlash + 1);
-			String fileName = URLEncoder.encode(url.substring(lastSlash + 1),
-					"UTF-8");
+			String fileName = URLEncoder.encode(url.substring(lastSlash + 1), "UTF-8");
 			resultUrl = pureUrl + fileName;
 
 		} catch (UnsupportedEncodingException e) {
@@ -641,10 +746,8 @@ public class HttpUtils {
 	}
 
 	private static String buildDataformPostdata(Map<String, String> postData) {
-
 		if (postData != null) {
-			Iterator<Entry<String, String>> itr = postData.entrySet()
-					.iterator();
+			Iterator<Entry<String, String>> itr = postData.entrySet().iterator();
 
 			StringBuilder builder = new StringBuilder();
 
@@ -652,13 +755,18 @@ public class HttpUtils {
 				Entry<String, String> entry = itr.next();
 
 				builder.append(PREFIX + BOUNDARY + CRLF);
-				builder.append("Content-Disposition:form-data;name=\""
-						+ entry.getKey() + "\"" + CRLF + CRLF);
+				builder.append("Content-Disposition:form-data;name=\"" + entry.getKey() + "\"" + CRLF + CRLF);
 				builder.append(entry.getValue() + CRLF);
 			}
 			return builder.toString();
 		}
 		return null;
 
+	}
+
+	public static void debug(String msg) {
+		if (DEBUG) {
+			Log.d(DEBUG_TAG, msg);
+		}
 	}
 }
