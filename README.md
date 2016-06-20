@@ -78,6 +78,9 @@ downloader.download("http://www.test.com/a.file", new HttpDownloadListener() {
 }, SDCard.sdCardDir() + "/saveDir");
 ```
 
+###Known bugs###
+Because the HttpUtils holds the references of all kinds of HttpListener, which may has implicit reference of outer Activity, so HttpUtils may delay the garbage collector to destroy the Activity object, which may cause performance problems. If you want to do heavy operation through Http request, Android Loader may be a good choice. 
+
 MozzDB
 --------------------
 使用前，步骤如下：
