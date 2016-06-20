@@ -105,7 +105,13 @@ class HttpPostFile extends HttpTask {
 			if (mListener != null)
 				mListener.onUploading(completeSize, 1);
 			StringBuffer sb = new StringBuffer();
-			in = urlConnection.getInputStream();
+			int status = urlConnection.getResponseCode();
+
+			if (status >= 400)
+				in = urlConnection.getErrorStream();
+			else
+				in = urlConnection.getInputStream();
+
 			br = new BufferedReader(new InputStreamReader(in));
 
 			String line = null;
