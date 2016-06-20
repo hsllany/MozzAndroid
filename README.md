@@ -49,8 +49,8 @@ httpUtils.post("http://www.baidu.com", new HttpListener() {
 
 ###文件下载###
 ```java
-DownloaderHttpUtils downloader = new DownloaderHttpUtils();
-downloader.download("http://www.test.com/a.file", new HttpDownloadListener() {
+HttpUtils httpUtils = new HttpUtils();
+HttpUtils.download("http://www.test.com/a.file", new HttpDownloadListener() {
 			
 	@Override
 	public void onDownloadSuccess() {
@@ -77,6 +77,9 @@ downloader.download("http://www.test.com/a.file", new HttpDownloadListener() {
 	}
 }, SDCard.sdCardDir() + "/saveDir");
 ```
+
+###Release resources###
+After you finish all Http request, you should explicitly invoke ```HttpUtils.shutdown```to finish the job. This operation will cancel the task that has not been executed currently.
 
 ###Known bugs###
 Because the HttpUtils holds the references of all kinds of HttpListener, which may has implicit reference of outer Activity, so HttpUtils may delay the garbage collector to destroy the Activity object, which may cause performance problems. If you want to do heavy operation through Http request, Android Loader may be a good choice. 
